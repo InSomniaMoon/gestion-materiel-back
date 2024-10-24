@@ -33,8 +33,8 @@ class SubscriptionController extends Controller
 
         $subscriptions = $item->subscriptions()
             ->where('status', '<>', 'canceled')
-            ->where('start_date', '<=', $end_date)
-            ->where('end_date', '>=', $start_date)
+            ->where('start_date', '<', $end_date)
+            ->where('end_date', '>', $start_date)
             ->get();
 
 
@@ -50,11 +50,25 @@ class SubscriptionController extends Controller
             'status' => 'active',
         ]);
 
+        if (Auth::user()->role != 'admin') {
+            unset($subscription->user_id);
+        }
         return response()->json($subscription, 201);
     }
 
     function getSubscriptions(Request $request, Item $item)
     {
-        return response()->json($item->subscriptions()->get(), 200);
+        $subscriptions = $item->subscriptions()->get();
+        if (Auth::user()->role != 'admin') {
+
+            $subscriptions = $subscriptions->map(function ($subscription) {
+                if (Auth::user()->id != $subscription->user_id) {
+                    $subscription->name = 'Occupied';
+                    unset($subscription->user_id);
+                }
+                return $subscription;
+            });
+        }
+        return response()->json($subscriptions, 200);
     }
 }

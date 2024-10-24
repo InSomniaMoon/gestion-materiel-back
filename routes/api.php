@@ -16,7 +16,7 @@ Route::prefix('/auth')->group(function () {
 });
 
 
-Route::prefix('/items')->group(function () {
+Route::prefix('/items')->middleware('jwt')->group(function () {
     Route::get('/', [ItemsController::class, 'index']);
     Route::post('/', [ItemsController::class, 'createItem'])->middleware('jwt:admin');
 
@@ -28,4 +28,4 @@ Route::prefix('/items')->group(function () {
         Route::get('/uses', [SubscriptionController::class, 'getSubscriptions']);
         Route::post('/uses', [SubscriptionController::class, 'createSubscription'])->middleware('jwt:admin');
     });
-})->middleware('jwt');
+});
