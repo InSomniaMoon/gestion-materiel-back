@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\ItemFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Item extends Model
 {
+    use HasFactory;
     //     -- un item est un objet, une salle, une tente empreintable.
     // CREATE TABLE IF NOT EXISTS `items` (
     //   `id` BIGINT(11) NOT NULL AUTO_INCREMENT,
@@ -19,7 +22,6 @@ class Item extends Model
     protected $fillable = [
         'name',
         'description',
-        'slug',
         'category',
         'usable'
     ];
@@ -31,11 +33,16 @@ class Item extends Model
 
     public function itemOptions()
     {
-        return $this->hasMany(ItemOption::class);
+        return $this->hasMany(ItemOption::class, 'item_id');
     }
 
     public function itemOptionIssues()
     {
         return $this->hasManyThrough(ItemOptionIssue::class, ItemOption::class);
+    }
+
+    protected static function newFactory()
+    {
+        return ItemFactory::new();
     }
 }

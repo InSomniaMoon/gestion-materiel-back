@@ -15,13 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description');
-            $table->string('slug')->unique();
             $table->string('category');
             $table->boolean('usable')->default(true);
             $table->timestamps();
         });
 
-        Schema::create('items_options', function (Blueprint $table) {
+        Schema::create('item_options', function (Blueprint $table) {
             $table->id();
             $table->foreignId('item_id')->references('id')->on('items')->constrained()->onDelete('cascade');
             $table->string('name');
@@ -29,16 +28,16 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('items_options_issues', function (Blueprint $table) {
+        Schema::create('item_option_issues', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('item_option_id')->references('id')->on('items_options')->constrained()->onDelete('cascade');
+            $table->foreignId('item_option_id')->references('id')->on('item_options')->constrained()->onDelete('cascade');
             $table->string('value');
             $table->timestamps();
         });
 
-        Schema::create('items_options_issues_comments', function (Blueprint $table) {
+        Schema::create('item_option_issue_comments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('item_option_issue_id')->references('id')->on('items_options_issues')->constrained()->onDelete('cascade');
+            $table->foreignId('item_option_issue_id')->references('id')->on('item_option_issues')->constrained()->onDelete('cascade');
             $table->text('comment');
             $table->foreignId('user_id')->references('id')->on('users')->constrained()->onDelete('cascade');
             $table->timestamps();
@@ -62,9 +61,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('items');
-        Schema::dropIfExists('items_options');
-        Schema::dropIfExists('items_options_issues');
-        Schema::dropIfExists('items_options_issues_comments');
+        Schema::dropIfExists('item_options');
+        Schema::dropIfExists('item_option_issues');
+        Schema::dropIfExists('item_option_issue_comments');
         Schema::dropIfExists('item_subscriptions');
     }
 };
