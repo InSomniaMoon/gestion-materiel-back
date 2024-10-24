@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Item;
+use App\Models\ItemOption;
 use Illuminate\Database\Seeder;
 
 class ItemSeeder extends Seeder
@@ -12,7 +13,120 @@ class ItemSeeder extends Seeder
      */
     public function run(): void
     {
-        Item::factory()->count(10)->create();
+        $item = Item::create([
+            'name' => 'Salle 10 places',
+            'description' => 'Salle 10 places',
+            'category' => 'salle',
+            'usable' => true,
+        ]);
+
+        ItemOption::create([
+            'name' => 'Chaise',
+            'description' => 'Chaise',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+
+        ItemOption::create([
+            'name' => 'Table',
+            'description' => 'Table',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+
+        ItemOption::create([
+            'name' => 'Projecteur',
+            'description' => 'Projecteur',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+
+        Item::create([
+            'name' => 'Tente 4 places',
+            'description' => 'Tente 4 places',
+            'category' => 'tente',
+            'usable' => true
+        ]);
+        Item::create([
+            'name' => 'Tente 2 places',
+            'description' => 'Tente 2 places',
+            'category' => 'tente',
+            'usable' => true
+        ]);
+
+        $item = Item::create([
+            'name' => 'Tente 6 places',
+            'description' => 'Tente 6 places',
+            'category' => 'tente',
+            'usable' => true,
+        ]);
+
+        ItemOption::create([
+            'name' => 'double toit',
+            'description' => 'double toit',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+
+        ItemOption::create([
+            'name' => 'toit',
+            'description' => 'toit',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+
+        ItemOption::create([
+            'name' => 'piquets',
+            'description' => '2 piquets et 1 fétiere',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+
+
+        $item = Item::create([
+            'name' => 'Tente 8 places',
+            'description' => 'Tente 8 places',
+            'category' => 'tente',
+            'usable' => true
+        ]);
+
+        ItemOption::create([
+            'name' => 'double toit',
+            'description' => 'double toit',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+        ItemOption::create([
+            'name' => 'toit',
+            'description' => 'toit',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+        ItemOption::create([
+            'name' => 'piquets',
+            'description' => '3 piquets et 2 fétieres',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+        ItemOption::create([
+            'name' => 'Matelas',
+            'description' => 'Matelas',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+        ItemOption::create([
+            'name' => 'Sac de couchage',
+            'description' => 'Sac de couchage',
+            'usable' => true,
+            'item_id' => $item->id
+        ]);
+
+        $item =  Item::create([
+            'name' => 'Tente 10 places',
+            'description' => 'Tente 10 places',
+            'category' => 'tente',
+            'usable' => true
+        ]);
     }
 
     protected $model = Item::class;

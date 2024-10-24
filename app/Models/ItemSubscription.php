@@ -11,6 +11,7 @@ class ItemSubscription extends Model
         'item_id',
         'user_id',
         'status',
+        'name',
         'start_date',
         'end_date',
     ];

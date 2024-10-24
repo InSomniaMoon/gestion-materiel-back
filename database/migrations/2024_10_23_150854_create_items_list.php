@@ -25,6 +25,7 @@ return new class extends Migration
             $table->foreignId('item_id')->references('id')->on('items')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->text('description');
+            $table->boolean('usable')->default(true);
             $table->timestamps();
         });
 
@@ -49,6 +50,7 @@ return new class extends Migration
             $table->foreignId('item_id')->references('id')->on('items')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->references('id')->on('users')->constrained()->onDelete('cascade');
             $table->string('status');
+            $table->string('name');
             $table->timestamp('start_date');
             $table->timestamp('end_date');
             $table->timestamps();
