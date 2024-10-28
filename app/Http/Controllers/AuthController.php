@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TokenType;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,10 @@ class AuthController extends Controller
             $user = Auth::user();
 
             // (optional) Attach the role to the token.
-            $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
+            $token = JWTAuth::claims([
+                'role' => $user->role,
+                'type' => TokenType::ACCESS,
+            ])->fromUser($user);
 
             return response()->json(compact('token', 'user'));
         } catch (JWTException $e) {
