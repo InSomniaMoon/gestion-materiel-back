@@ -15,6 +15,11 @@ Route::prefix('/auth')->group(function () {
     });
 });
 
+Route::prefix('users')->group(function () {
+    Route::get('/', [AuthController::class, 'index'])->middleware('jwt:admin');
+    // Route::get('/me/permanentTokenForICS', [AuthController::class, 'createJwtAlwaysAdmin'])->middleware('jwt');
+});
+
 
 Route::prefix('/items')->middleware('jwt')->group(function () {
     Route::get('/', [ItemsController::class, 'index']);
@@ -29,3 +34,5 @@ Route::prefix('/items')->middleware('jwt')->group(function () {
         Route::post('/uses', [SubscriptionController::class, 'createSubscription'])->middleware('jwt:admin');
     });
 });
+
+// Route::get(('subscriptions/ICS'), [SubscriptionController::class, 'getICS'])->middleware('jwt:always:admin');

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\ItemSubscription;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use INSAN\ICS\ICS;
 
 class SubscriptionController extends Controller
 {
@@ -28,18 +30,14 @@ class SubscriptionController extends Controller
         $start_date = $request->start_date;
         $end_date = $request->end_date;
 
-        // check if the item is already subscribed on the given date
-        // retrieve all the subscriptions of the item where start date is less than or equal to the given end date and end date is greater than or equal to the given start date
-
         $subscriptions = $item->subscriptions()
             ->where('status', '<>', 'canceled')
             ->where('start_date', '<', $end_date)
             ->where('end_date', '>', $start_date)
             ->get();
 
-
         if ($subscriptions->count() > 0) {
-            return response()->json(['message' => 'Item is already subscribed on the given date'], 403);
+            return response()->json(['message' => ` L'Item est déjà utilisé sur les dates données.`], Response::HTTP_CONFLICT);
         }
 
         $subscription =  $item->subscriptions()->create([
@@ -71,4 +69,37 @@ class SubscriptionController extends Controller
         }
         return response()->json($subscriptions, 200);
     }
+
+
+    // function getICS(Request $request)
+    // {
+    //     // get all the subscriptions of the user
+    //     $subscriptions = ItemSubscription::where("start_date", ">=", "NOW()")->get();
+    //     Log::info($subscriptions);
+
+
+    //     $ics_file =
+    //         $subscriptions->map(function ($subscription) {
+    //             return new ICS([
+    //                 'start_date' => $subscription->start_date,
+    //                 'end_date' => $subscription->end_date,
+    //                 'summary' => $subscription->name,
+
+    //                 'uid' => $subscription->id,
+    //                 'sequence' => 0,
+    //                 'dtstart' => $subscription->start_date,
+    //                 'dtend' => $subscription->end_date,
+    //             ]);
+    //         })->map(function ($ics) {
+    //             return $ics->toString();
+    //         })->implode("\n");
+
+
+    //     return response($ics_file, 200, [
+    //         'Content-Type' => 'text/calendar',
+    //         'Content-Disposition' => 'attachment; filename="calendar.ics"'
+    //     ]);
+
+    //     return response()->json([], 200);
+    // }
 }
