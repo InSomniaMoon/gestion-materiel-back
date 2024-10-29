@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ItemOptionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ItemsController;
 use App\Http\Controllers\SubscriptionController;
@@ -30,8 +31,19 @@ Route::prefix('/items')->middleware('jwt')->group(function () {
         Route::put('/', [ItemsController::class, 'update'])->middleware('jwt:admin');
         Route::delete('/', [ItemsController::class, 'destroy'])->middleware('jwt:admin');
 
-        Route::get('/uses', [SubscriptionController::class, 'getSubscriptions']);
-        Route::post('/uses', [SubscriptionController::class, 'createSubscription'])->middleware('jwt:admin');
+
+        Route::prefix('options')->group(function () {
+            Route::get('/', [ItemOptionController::class, 'getOptions']);
+            Route::post('/', [ItemOptionController::class, 'createOption'])->middleware('jwt:admin');
+            Route::patch('/{option:id}', [ItemOptionController::class, 'updateOption'])->middleware('jwt:admin');
+            route::delete('/{option:id}', [ItemOptionController::class, 'deleteOption'])->middleware('jwt:admin');
+        });
+
+        Route::prefix('uses')->group(function () {
+            Route::get('/', [SubscriptionController::class, 'getSubscriptions']);
+            Route::post('/', [SubscriptionController::class, 'createSubscription'])->middleware('jwt:admin');
+            Route::get('{subscription:id}', [SubscriptionController::class, 'getSubscription']);
+        });
     });
 });
 
