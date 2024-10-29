@@ -48,7 +48,7 @@ class ItemsController extends Controller
 
     function show(Item $item)
     {
-        return response()->json(Item::with('itemOptions')->find($item->id));
+        return response()->json($item);
     }
 
     function update(Request $request, Item $item)
@@ -56,7 +56,8 @@ class ItemsController extends Controller
         $validator = Validator::make($request->all(), [
             "name" => "required",
             "description" => "required|max:255",
-            "category" => "required",
+            "category" => "required|max:255",
+            "usable" => "boolean|required"
         ]);
 
         if ($validator->fails()) {
@@ -66,6 +67,7 @@ class ItemsController extends Controller
         $item->name = $request->name;
         $item->description = $request->description;
         $item->category = $request->category;
+        $item->usable = $request->usable ?? $item->usable;
         $item->save();
         return response()->json($item);
     }

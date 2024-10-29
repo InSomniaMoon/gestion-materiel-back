@@ -70,6 +70,19 @@ class SubscriptionController extends Controller
         return response()->json($subscriptions, 200);
     }
 
+    function getSubscription(Request $request, Item $item, ItemSubscription $subscription)
+    {
+        if (Auth::user()->role != 'admin' && Auth::user()->id != $subscription->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if ($subscription->item_id != $item->id) {
+            return response()->json(['message' => 'Subscription not found'], 404);
+        }
+
+        return response()->json($subscription);
+    }
+
 
     // function getICS(Request $request)
     // {

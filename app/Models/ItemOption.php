@@ -19,7 +19,8 @@ class ItemOption extends Model
     protected $fillable = [
         'item_id',
         'name',
-        'usable'
+        'usable',
+        'description'
     ];
 
     protected $hidden = [
@@ -36,6 +37,4 @@ class ItemOption extends Model
     {
         return $this->hasMany(ItemOptionIssue::class);
     }
-
-
 }
