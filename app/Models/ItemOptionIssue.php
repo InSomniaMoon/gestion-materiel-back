@@ -19,6 +19,11 @@ class ItemOptionIssue extends Model
         'updated_at'
     ];
 
+    public function comments()
+    {
+        return $this->hasMany(ItemOptionIssueComment::class);
+    }
+
     public function itemOption()
     {
         return $this->belongsTo(ItemOption::class);

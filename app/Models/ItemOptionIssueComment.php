@@ -16,4 +16,9 @@ class ItemOptionIssueComment extends Model
     protected $hidden = [
         'updated_at'
     ];
+
+    public function author()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

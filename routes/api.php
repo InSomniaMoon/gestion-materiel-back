@@ -59,5 +59,17 @@ Route::prefix('/items')->middleware('jwt')->group(function () {
         });
     });
 });
+Route::prefix('/options')->middleware('jwt')->group(function () {
 
+    Route::prefix('/{option:id}')->group(function () {
+        Route::get('/', [ItemOptionController::class, 'getOption']);
+        Route::prefix('/issues')->group(function () {
+            Route::prefix('/{optionIssue:id}')->group(function () {
+                Route::patch('/resolve', [ItemOptionIssueController::class, 'resolveIssue'])->middleware('jwt:admin');
+                Route::post('/comments', [ItemOptionIssueController::class, 'createComment'])->middleware('jwt:admin');
+                Route::get('/comments', [ItemOptionIssueController::class, 'getComments']);
+            });
+        });
+    });
+});
 // Route::get(('subscriptions/ICS'), [SubscriptionController::class, 'getICS'])->middleware('jwt:always:admin');
