@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ItemsController extends Controller
@@ -26,6 +25,7 @@ class ItemsController extends Controller
             "name" => $request->name,
             "description" => $request->description,
             "category" => $request->category,
+            'group_id' => $request->user()->group_id,
         ]);
         $item->save();
         return response()->json($item, 201);
@@ -37,17 +37,31 @@ class ItemsController extends Controller
         $size = $request->query('per_page', 20);
         $page = $request->query('page', 1);
         $orderBy = $request->query('order_by', 'name');
+        $search = $request->query("q");
 
         // Get all items paginated with their itemOptions
-        $items = Item::orderBy($orderBy)->simplePaginate($size, ['*'], null, $page)
+        $items = Item::orderBy($orderBy)->where('group_id', $request->user()->group_id);
+        if ($search) {
+            $items = $items
+                ->orWhere('description', 'like', "%$search%")
+                ->orWhere('category', 'like', "%$search%");
+        } else {
+        }
+
+
+        $items = $items->simplePaginate($size, ['*'], null, $page)
             ->withPath('/items')
             // set the query string for the next page
             ->withQueryString();
+
         return response()->json($items);
     }
 
-    function show(Item $item)
+    function show(Request $request, Item $item)
     {
+        if ($item->group_id !== $request->user()->group_id) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         return response()->json($item);
     }
 

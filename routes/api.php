@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ItemOptionController;
+use App\Http\Controllers\ItemOptionIssueController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ItemsController;
 use App\Http\Controllers\SubscriptionController;
@@ -35,8 +36,20 @@ Route::prefix('/items')->middleware('jwt')->group(function () {
         Route::prefix('options')->group(function () {
             Route::get('/', [ItemOptionController::class, 'getOptions']);
             Route::post('/', [ItemOptionController::class, 'createOption'])->middleware('jwt:admin');
-            Route::patch('/{option:id}', [ItemOptionController::class, 'updateOption'])->middleware('jwt:admin');
-            route::delete('/{option:id}', [ItemOptionController::class, 'deleteOption'])->middleware('jwt:admin');
+            Route::get('/issues', [ItemOptionIssueController::class, 'getIssues'])->middleware('jwt:admin');
+
+            Route::prefix('/{option:id}')->group(function () {
+                Route::get('/', [ItemOptionController::class, 'getOption']);
+                Route::put('/', [ItemOptionController::class, 'updateOption'])->middleware('jwt:admin');
+                Route::delete('/', [ItemOptionController::class, 'deleteOption'])->middleware('jwt:admin');
+
+                Route::prefix('issues')->group(function () {
+                    Route::post('/', [ItemOptionIssueController::class, 'createIssue'])->middleware('jwt:admin');
+                    Route::get('/', [ItemOptionIssueController::class, 'getIssues']);
+                    Route::put('/{issue:id}', [ItemOptionIssueController::class, 'updateIssue'])->middleware('jwt:admin');
+                    Route::delete('/{issue:id}', [ItemOptionIssueController::class, 'deleteIssue'])->middleware('jwt:admin');
+                });
+            });
         });
 
         Route::prefix('uses')->group(function () {

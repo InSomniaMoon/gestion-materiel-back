@@ -7,9 +7,7 @@ use App\Models\ItemSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use INSAN\ICS\ICS;
 
 class SubscriptionController extends Controller
 {
@@ -23,7 +21,7 @@ class SubscriptionController extends Controller
             'end_date' => 'required|date',
         ]);
 
-        if ($validator->fails()) {
+        if ($validator->fails() || $request->user()->group_id !== $item->group_id) {
             return response()->json($validator->errors(), 400);
         }
 
@@ -48,25 +46,14 @@ class SubscriptionController extends Controller
             'status' => 'active',
         ]);
 
-        if (Auth::user()->role != 'admin') {
-            unset($subscription->user_id);
-        }
+
         return response()->json($subscription, 201);
     }
 
     function getSubscriptions(Request $request, Item $item)
     {
         $subscriptions = $item->subscriptions()->get();
-        if (Auth::user()->role != 'admin') {
 
-            $subscriptions = $subscriptions->map(function ($subscription) {
-                if (Auth::user()->id != $subscription->user_id) {
-                    $subscription->name = 'Occupied';
-                    unset($subscription->user_id);
-                }
-                return $subscription;
-            });
-        }
         return response()->json($subscriptions, 200);
     }
 

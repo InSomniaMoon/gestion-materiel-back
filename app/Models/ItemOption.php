@@ -33,7 +33,7 @@ class ItemOption extends Model
         return $this->belongsTo(Item::class);
     }
 
-    public function itemOptionValues()
+    public function optionIssues()
     {
         return $this->hasMany(ItemOptionIssue::class);
     }

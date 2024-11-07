@@ -23,7 +23,8 @@ class Item extends Model
         'name',
         'description',
         'category',
-        'usable'
+        'usable',
+        'group_id'
     ];
 
     protected $hidden = [
@@ -31,12 +32,12 @@ class Item extends Model
         'updated_at'
     ];
 
-    public function itemOptions()
+    public function options()
     {
         return $this->hasMany(ItemOption::class, 'item_id');
     }
 
-    public function itemOptionIssues()
+    public function optionIssues()
     {
         return $this->hasManyThrough(ItemOptionIssue::class, ItemOption::class);
     }
@@ -44,7 +45,6 @@ class Item extends Model
     public function subscriptions()
     {
         return $this->hasMany(ItemSubscription::class, 'item_id');
-        
     }
 
     protected static function newFactory()
