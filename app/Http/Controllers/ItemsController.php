@@ -41,11 +41,14 @@ class ItemsController extends Controller
 
         // Get all items paginated with their itemOptions
         $items = Item::orderBy($orderBy)->where('group_id', $request->user()->group_id);
+
         if ($search) {
             $items = $items
-                ->orWhere('description', 'like', "%$search%")
-                ->orWhere('category', 'like', "%$search%");
-        } else {
+                ->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%$search%")
+                        ->orWhere('description', 'like', "%$search%")
+                        ->orWhere('category', 'like', "%$search%");
+                });
         }
 
 
@@ -90,5 +93,13 @@ class ItemsController extends Controller
     {
         $item->delete();
         return response()->json(null, 204);
+    }
+
+
+    public function getCategories()
+    {
+        // get all distinct 'category' values from the 'items' table
+        $categories = Item::distinct()->pluck('category');
+        return response()->json($categories);
     }
 }

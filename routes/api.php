@@ -26,6 +26,8 @@ Route::prefix('users')->group(function () {
 Route::prefix('/items')->middleware('jwt')->group(function () {
     Route::get('/', [ItemsController::class, 'index']);
     Route::post('/', [ItemsController::class, 'createItem'])->middleware('jwt:admin');
+    Route::get('/categories', [ItemsController::class, 'getCategories']);
+
 
     Route::prefix('/{item:id}')->group(function () {
         Route::get('/', [ItemsController::class, 'show']);
@@ -72,4 +74,5 @@ Route::prefix('/options')->middleware('jwt')->group(function () {
         });
     });
 });
+
 // Route::get(('subscriptions/ICS'), [SubscriptionController::class, 'getICS'])->middleware('jwt:always:admin');
