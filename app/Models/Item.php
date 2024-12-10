@@ -51,4 +51,11 @@ class Item extends Model
     {
         return ItemFactory::new();
     }
+
+    static $validation = [
+        "name" => "required|max:255",
+        "description" => "required|max:255",
+        "category" => "required|max:255",
+        "usable" => "boolean",
+    ];
 }

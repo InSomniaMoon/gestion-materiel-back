@@ -11,11 +11,7 @@ class ItemsController extends Controller
 
     function createItem(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            "name" => "required",
-            "description" => "required|max:255",
-            "category" => "required",
-        ]);
+        $validator = Validator::make($request->all(), Item::$validation);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
@@ -28,6 +24,26 @@ class ItemsController extends Controller
             'group_id' => $request->user()->group_id,
         ]);
         $item->save();
+        if ($request->has('options')) {
+            // validation for options
+            $validator = Validator::make($request->options, [
+                "*.name" => "required|max:255",
+                "*.description" => "max:255",
+            ]);
+
+            // map through the options and add 'usable' to each option
+
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+
+            $options = array_map(function ($option) {
+                $option['usable'] = $option['usable'] ?? true;
+                return $option;
+            }, $request->options);
+
+            $item->options()->createMany($options);
+        }
         return response()->json($item, 201);
     }
 
@@ -70,12 +86,7 @@ class ItemsController extends Controller
 
     function update(Request $request, Item $item)
     {
-        $validator = Validator::make($request->all(), [
-            "name" => "required",
-            "description" => "required|max:255",
-            "category" => "required|max:255",
-            "usable" => "boolean|required"
-        ]);
+        $validator = Validator::make($request->all(), Item::$validation);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
