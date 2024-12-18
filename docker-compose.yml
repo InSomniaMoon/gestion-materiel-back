@@ -13,15 +13,19 @@ services:
             - 'traefik.enable=true'
             # Here we have to define the URL
             # More details https://doc.traefik.io/traefik/v2.0/routing/routers/#rule
-            - 'traefik.http.routers.laravel-matos.rule=Host(`matos.pierreleroyer.fr`)'
+            - 'traefik.http.routers.laravel-matos.rule=Host(`matos.pierreleroyer.fr`) && PathPrefix(`/api`)'
             # Here we are defining wich entrypoint should be used by clients to access this service
-            - 'traefik.http.routers.laravel-matos.entrypoints=web, websecure'
+            - 'traefik.http.routers.laravel-matos.entrypoints=websecure'
             # Here we define in wich network treafik can find this service
-            - 'traefik.docker.network=web'
             # This is the port that traefik should proxy
             - 'traefik.http.services.laravel-matos.loadbalancer.server.port=80'
+            # - 'traefik.http.services.laravel-matos.tls=true'
+            - traefik.http.routers.laravel-matos.tls=true
+            - traefik.http.routers.laravel-matos.tls.certresolver=letsencrypt
+            - 'traefik.docker.network=websecure'
         ports:
             - '${APP_PORT:-80}:80'
+            # - '${APP_PORT:-80}:443'
             # - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
             WWWUSER: '${WWWUSER}'
