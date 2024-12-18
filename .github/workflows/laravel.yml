@@ -50,8 +50,4 @@ jobs:
           # connection timeout to remote host
           # connect_timeout: # optional, default is 30s
           # execute commands on ssh
-          scripts:
-            - "cd ~/gestion_material/back"
-            - "git pull"
-            - composer install
-            - sail up -d
+          script: "cd ~/gestion_material/back && git pull && composer install && sail up -d && sail artisan migrate"
