@@ -38,13 +38,13 @@ jobs:
         uses: cross-the-world/ssh-pipeline@v1.2.0
         with:
           # ssh remote host
-          host: ${{ secret.HOST }}
+          host: ${{ secrets.SSH_HOST }}
           # ssh remote port
           # port: # optional, default is 22
           # ssh remote user
-          user: ${{ secret.USER }}
+          user: ${{ secrets.SSH_USER }}
           # content of ssh private key. ex raw content of ~/.ssh/id_rsa
-          key: ${{ secret.PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           # ssh remote password
           # pass: # optional
           # connection timeout to remote host
