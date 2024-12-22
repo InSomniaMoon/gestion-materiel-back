@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        config(['app.debug.sql' => env('APP_DEBUG_SQL', false)]);
+        config(['app.debug.sql' => env('APP_DEBUG_SQL', true)]);
 
         if (config('app.debug.sql')) {
             // log all queries

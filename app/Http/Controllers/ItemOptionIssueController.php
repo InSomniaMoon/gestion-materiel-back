@@ -7,24 +7,26 @@ use App\Models\ItemOption;
 use App\Models\ItemOptionIssue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ItemOptionIssueController extends Controller
 {
-    function createIssue(Request $request, ItemOption $itemOption)
+    function createIssue(Request $request, Item $item, ItemOption $option)
     {
         $validator = Validator::make($request->all(), [
-            'date_declaration' => 'required|date',
-            'status' => 'required',
+            'value' => 'required',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
 
-        $issue = $itemOption->optionIssues()->create([
-            'date_declaration' => $request->date_declaration,
-            'status' => $request->status,
+        $issue = $option->optionIssues()->create([
+            'status' => 'open',
+            'value' => trim($request->value),
+            'item_option_id' => $option->id,
         ]);
 
         return response()->json($issue, 201);
@@ -66,5 +68,25 @@ class ItemOptionIssueController extends Controller
         $optionIssue->save();
 
         return response()->json($optionIssue);
+    }
+
+    public function getIssuesForItems()
+    {
+        // item_ids from query params
+        $itemIds = request()->query('item_ids');
+        Log::info($itemIds);
+        if (!$itemIds) {
+            return response()->json([]);
+        }
+        // item_ids is a string of comma separated integers
+        $itemIds = explode(',', $itemIds);
+
+        return response()->json(ItemOptionIssue::where('status', 'open')
+            ->where(function ($q) use ($itemIds) {
+                $q->whereIn('item_option_id', function ($q) use ($itemIds) {
+                    $q->select('id')->from('item_options')->whereIn('item_id', $itemIds);
+                });
+            })
+            ->with('itemOption.item')->get());
     }
 }

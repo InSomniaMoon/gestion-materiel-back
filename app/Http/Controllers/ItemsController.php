@@ -50,7 +50,7 @@ class ItemsController extends Controller
     function index(Request $request)
     {
         // "current_page": 1,
-        $size = $request->query('per_page', 20);
+        $size = $request->query('size', 25);
         $page = $request->query('page', 1);
         $orderBy = $request->query('order_by', 'name');
         $search = $request->query("q");
@@ -67,8 +67,7 @@ class ItemsController extends Controller
                 });
         }
 
-
-        $items = $items->simplePaginate($size, ['*'], null, $page)
+        $items = $items->paginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
             ->withPath('/items')
             // set the query string for the next page
             ->withQueryString();

@@ -56,13 +56,14 @@ Route::prefix('/items')->middleware('jwt')->group(function () {
 
         Route::prefix('uses')->group(function () {
             Route::get('/', [SubscriptionController::class, 'getSubscriptions']);
-            Route::post('/', [SubscriptionController::class, 'createSubscription'])->middleware('jwt:admin');
+            Route::post('/', [SubscriptionController::class, 'createSubscription']);
             Route::get('{subscription:id}', [SubscriptionController::class, 'getSubscription']);
         });
     });
 });
 Route::prefix('/options')->middleware('jwt')->group(function () {
 
+    Route::get('/issues', [ItemOptionIssueController::class, 'getIssuesForItems'])->middleware('jwt:admin');
     Route::prefix('/{option:id}')->group(function () {
         Route::get('/', [ItemOptionController::class, 'getOption']);
         Route::prefix('/issues')->group(function () {
