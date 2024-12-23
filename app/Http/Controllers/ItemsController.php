@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\UserGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -54,9 +55,23 @@ class ItemsController extends Controller
         $page = $request->query('page', 1);
         $orderBy = $request->query('order_by', 'name');
         $search = $request->query("q");
+        $group_id = $request->query("group_id");
+
+        $validator = Validator::make($request->all(), [
+            'group_id' => 'required|exists:groups,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
 
         // Get all items paginated with their itemOptions
-        $items = Item::orderBy($orderBy)->where('group_id', $request->user()->group_id);
+
+
+        $items = Item::where('group_id', $group_id)
+            // ->with('options')
+            ->orderBy($orderBy);
+
 
         if ($search) {
             $items = $items
@@ -77,7 +92,9 @@ class ItemsController extends Controller
 
     function show(Request $request, Item $item)
     {
-        if ($item->group_id !== $request->user()->group_id) {
+        if (!UserGroup::where('user_id', $request->user()->id)
+            ->where('group_id', $item->group_id)
+            ->firstOrFail()) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         return response()->json($item);

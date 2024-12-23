@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,12 +22,16 @@ class JwtAdminMiddleware
             JWTAuth::parseToken()->authenticate();
             // get role claim from token
             $payload = JWTAuth::parseToken()->getPayload();
-            $role = $payload->get('role');
+            $groups = $payload->get('admin_groups');
+            Log::info('admin_groups', ['groups' => $groups]);
+            // check if the group_id in url is in the admin_groups claim
 
-            if ($role !== 'admin') {
+            $group_id = $request->route('group_id');
+            if (!in_array($group_id, $groups)) {
                 throw new JWTException('not admin');
             }
         } catch (JWTException $e) {
+            Log::warning('Token not valid', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Token not valid'], 401);
         }
 

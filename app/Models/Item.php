@@ -52,6 +52,11 @@ class Item extends Model
         return ItemFactory::new();
     }
 
+    public function group()
+    {
+        return $this->belongsTo(Group::class);
+    }
+
     static $validation = [
         "name" => "required|max:255",
         "description" => "required|max:255",
