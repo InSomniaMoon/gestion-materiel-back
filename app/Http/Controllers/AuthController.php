@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -24,24 +25,21 @@ class AuthController extends Controller
             return response()->json($validator->errors()->toJson(), 400);
         }
 
-        try {
-            if (! $token = JWTAuth::attempt($request->only('email', 'password'))) {
-                return response()->json(['error' => 'Invalid credentials'], 401);
-            }
 
-            // Get the authenticated user.
-            $user = Auth::user();
-
-            // (optional) Attach the role to the token.
-            $token = JWTAuth::claims([
-                'role' => $user->role,
-                'type' => TokenType::ACCESS,
-            ])->fromUser($user);
-
-            return response()->json(compact('token', 'user'));
-        } catch (JWTException $e) {
-            return response()->json(['error' => 'Could not create token'], 500);
+        if (! $token = JWTAuth::attempt($request->only('email', 'password'))) {
+            return response()->json(['error' => __('auth.failed')], 401);
         }
+
+        // Get the authenticated user.
+        $user = Auth::user();
+
+        // (optional) Attach the role to the token.
+        $token = JWTAuth::claims([
+            'role' => $user->role,
+            'type' => TokenType::ACCESS,
+        ])->fromUser($user);
+
+        return response()->json(compact('token', 'user'));
     }
 
     // User registration

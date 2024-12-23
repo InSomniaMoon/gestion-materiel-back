@@ -9,6 +9,7 @@
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9",
         "sssurii/laravel-ics": "^0.3.0",
+        "thiagoprz/eloquent-composite-key": "^1.0",
         "tymon/jwt-auth": "^2.1"
     },
     "require-dev": {

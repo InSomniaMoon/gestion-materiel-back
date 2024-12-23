@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Group;
+use App\Models\UserGroup;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 Artisan::command('inspire', function () {
@@ -14,8 +16,8 @@ Artisan::command("create_admin", function () {
     $this->info("Creating admin user");
     // ask for  'name', 'email', 'password', 'role', 'phone',
 
-    $name = $this->ask("Enter name");
-    $email = $this->ask("Enter email");
+    $name = $this->ask("Enter name", "Pierre Leroyer");
+    $email = $this->ask("Enter email", "pierre.leroyer69@gmail.com");
     do {
         $password = $this->secret("Enter password");
         $confirmPassword = $this->secret("Confirm password");
@@ -26,21 +28,28 @@ Artisan::command("create_admin", function () {
     $phone = $this->ask("Enter phone");
     // choose between the groups that are available
     $groups = Group::all()->pluck('name', 'id')->toArray();
-    Log::info($groups);
     // choose between the groups that are available
-    $group = $this->choice("Choose a group", $groups, 0);
+    $group = $this->choice("Choose a group", $groups);
 
+    $group = array_search($group, $groups);
 
     $user = new \App\Models\User();
     $user->name = $name;
     $user->email = $email;
     $user->password = \Illuminate\Support\Facades\Hash::make($password);
-    $user->role = "admin";
+    $user->role = "user";
     $user->phone = $phone;
-    $user->group_id = array_search($group, $groups);;
 
     $this->info("Creation...");
+    // begin transaction
+    DB::beginTransaction();
 
     $user->save();
+    UserGroup::create([
+        'user_id' => $user->id,
+        'group_id' => $group,
+        'role' => 'admin'
+    ]);
+    DB::commit();
     $this->info("Admin user created");
 })->purpose('Create an admin user');
