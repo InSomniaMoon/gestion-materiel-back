@@ -46,7 +46,7 @@ Route::prefix('/items')->middleware('jwt')->group(function () {
                 Route::delete('/', [ItemOptionController::class, 'deleteOption'])->middleware('jwt:admin');
 
                 Route::prefix('issues')->group(function () {
-                    Route::post('/', [ItemOptionIssueController::class, 'createIssue'])->middleware('jwt:admin');
+                    Route::post('/', [ItemOptionIssueController::class, 'createIssue']);
                     Route::get('/', [ItemOptionIssueController::class, 'getIssues']);
                     Route::put('/{issue:id}', [ItemOptionIssueController::class, 'updateIssue'])->middleware('jwt:admin');
                     Route::delete('/{issue:id}', [ItemOptionIssueController::class, 'deleteIssue'])->middleware('jwt:admin');

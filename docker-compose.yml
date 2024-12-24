@@ -15,7 +15,7 @@ services:
             - traefik.http.routers.laravel-matos.rule=Host(`matos.pierreleroyer.fr`) && PathPrefix(`/api`)
             - traefik.http.routers.laravel-matos.entrypoints=websecure
             - traefik.http.routers.laravel-matos.tls=true
-            - traefik.http.routers.laravel-matos.tls.certresolver=letsencrypt
+            - traefik.http.routers.laravel-matos.tls.certresolver=tlsresolver
             - traefik.http.routers.laravel-matos.priority=2
 
             - traefik.http.services.laravel-matos.loadbalancer.server.port=80
