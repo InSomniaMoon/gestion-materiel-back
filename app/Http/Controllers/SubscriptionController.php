@@ -19,10 +19,17 @@ class SubscriptionController extends Controller
             "name" => "required",
             'start_date' => 'required|date',
             'end_date' => 'required|date',
+            //$request->user()->group_id == $item->group_id
+            'group_id' => 'required|exists:groups,id',
         ]);
 
-        if ($validator->fails() || $request->user()->group_id !== $item->group_id) {
+        if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
+        }
+
+        // check that the user is in the same group as the item
+        if ($request->user()->userGroups()->where('group_id', $item->group_id)->count() == 0) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         $start_date = $request->start_date;
