@@ -42,7 +42,7 @@ class SubscriptionController extends Controller
             ->get();
 
         if ($subscriptions->count() > 0) {
-            return response()->json(['message' => ` L'Item est déjà utilisé sur les dates données.`], Response::HTTP_CONFLICT);
+            return response()->json(['message' => "L'Item est déjà utilisé sur les dates demandées."], Response::HTTP_CONFLICT);
         }
 
         $subscription =  $item->subscriptions()->create([
