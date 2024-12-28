@@ -15,15 +15,23 @@ class ItemsController extends Controller
   {
     $validator = Validator::make($request->all(), Item::$validation);
 
+    $group_id = $request->query('group_id');
+
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
+    }
+
+    if (!UserGroup::where('user_id', $request->user()->id)
+      ->where('group_id', $group_id)
+      ->firstOrFail()) {
+      return response()->json(['message' => 'Unauthorized'], 401);
     }
 
     $item = new Item([
       "name" => $request->name,
       "description" => $request->description,
       "category" => $request->category,
-      'group_id' => $request->user()->group_id,
+      'group_id' => $group_id,
     ]);
     $item->save();
     if ($request->has('options')) {

@@ -23,10 +23,8 @@ class JwtAdminMiddleware
             // get role claim from token
             $payload = JWTAuth::parseToken()->getPayload();
             $groups = $payload->get('admin_groups');
-            Log::info('admin_groups', ['groups' => $groups]);
-            // check if the group_id in url is in the admin_groups claim
 
-            $group_id = $request->route('group_id');
+            $group_id = $request->query('group_id');
             if (!in_array($group_id, $groups)) {
                 throw new JWTException('not admin');
             }
