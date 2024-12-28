@@ -8,59 +8,59 @@ use Illuminate\Database\Eloquent\Model;
 
 class Item extends Model
 {
-    use HasFactory;
+  use HasFactory;
     //     -- un item est un objet, une salle, une tente empreintable.
-    // CREATE TABLE IF NOT EXISTS `items` (
+  // CREATE TABLE IF NOT EXISTS `items` (
     //   `id` BIGINT(11) NOT NULL AUTO_INCREMENT,
     //   `name` varchar(255) NOT NULL,
     //   `description` text NOT NULL,
     //   `category` varchar(255) NOT NULL,
     //   `usable` BOOLEAN NOT NULL DEFAULT true,
     //   PRIMARY KEY (`id`)
-    // ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
+  // ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
-    protected $fillable = [
-        'name',
-        'description',
-        'category',
-        'usable',
-        'group_id'
-    ];
+  protected $fillable = [
+    'name',
+    'description',
+    'category',
+    'usable',
+    'group_id',
+  ];
 
-    protected $hidden = [
-        'created_at',
-        'updated_at'
-    ];
+  protected $hidden = [
+    'created_at',
+    'updated_at',
+  ];
 
-    public function options()
-    {
-        return $this->hasMany(ItemOption::class, 'item_id');
-    }
+  public function options()
+  {
+    return $this->hasMany(ItemOption::class, 'item_id');
+  }
 
-    public function optionIssues()
-    {
-        return $this->hasManyThrough(ItemOptionIssue::class, ItemOption::class);
-    }
+  public function optionIssues()
+  {
+    return $this->hasManyThrough(ItemOptionIssue::class, ItemOption::class);
+  }
 
-    public function subscriptions()
-    {
-        return $this->hasMany(ItemSubscription::class, 'item_id');
-    }
+  public function subscriptions()
+  {
+    return $this->hasMany(ItemSubscription::class, 'item_id');
+  }
 
-    protected static function newFactory()
-    {
-        return ItemFactory::new();
-    }
+  protected static function newFactory()
+  {
+    return ItemFactory::new();
+  }
 
-    public function group()
-    {
-        return $this->belongsTo(Group::class);
-    }
+  public function group()
+  {
+    return $this->belongsTo(Group::class);
+  }
 
-    static $validation = [
-        "name" => "required|max:255",
-        "description" => "required|max:255",
-        "category" => "required|max:255",
-        "usable" => "boolean",
-    ];
+  public static $validation = [
+    'name' => 'required|max:255',
+    'description' => 'required|max:255',
+    'category' => 'required|max:255',
+    'usable' => 'boolean',
+  ];
 }
