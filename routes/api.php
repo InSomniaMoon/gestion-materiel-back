@@ -11,10 +11,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('/auth')->group(function () {
   Route::post('login', [AuthController::class, 'login']);
   Route::post('register', [AuthController::class, 'register']);
+  Route::post('whoami', [AuthController::class, 'whoAmI']);
 
   Route::middleware('jwt')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
-    Route::get('whoami', [AuthController::class, 'whoAmI']);
   });
 });
 
