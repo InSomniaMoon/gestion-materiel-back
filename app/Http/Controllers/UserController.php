@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Models\UserGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -29,10 +29,10 @@ class UserController extends Controller
     $filter = $request->input('q', '');
 
     $users = User::where('name', 'like', '%'.$filter.'%')
-        ->orWhere('email', 'like', '%'.$filter.'%')
-        ->simplePaginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
-        ->withPath('/items')
-        ->withQueryString();
+      ->orWhere('email', 'like', '%'.$filter.'%')
+      ->simplePaginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
+      ->withPath('/items')
+      ->withQueryString();
 
     return response()->json($users);
   }
@@ -43,28 +43,32 @@ class UserController extends Controller
       'name' => 'required|string',
       'email' => 'required|email',
       'role' => 'required|string',
+      'group_id' => 'integer|required',
       'phone' => 'string|nullable',
+      'app_role' => 'required|string',
     ]);
 
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
 
-    $password = Hash::make($request->input('password'));
+    $password = Hash::make(Str::random(25));
 
     $user = User::create([
       'name' => $request->input('name'),
       'email' => $request->input('email'),
       'password' => $password,
-      'role' => $request->input('role'),
+      'role' => $request->input('app_role'),
       'phone' => $request->input('phone'),
     ]);
 
-    // get reset password token
+    UserGroup::create([
+      'user_id' => $user->id,
+      'group_id' => $request->input('group_id'),
+      'role' => $request->input('role'),
+    ]);
 
     Password::sendResetLink($request->only('email'));
-
-    // return response()->json(['message' => 'User created successfully'], 201);
 
     return response()->json($user, 201);
   }

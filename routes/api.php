@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FeatureClickController;
+use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ItemOptionController;
 use App\Http\Controllers\ItemOptionIssueController;
 use App\Http\Controllers\ItemsController;
@@ -83,5 +84,8 @@ Route::prefix('/features')->middleware('jwt')->group(function () {
 Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
   Route::get('/users', [UserController::class, 'getPaginatedUsers']);
   Route::post('/users', [UserController::class, 'createUser']);
+
+  Route::get('/groups', [GroupController::class, 'getGroups']);
+  Route::post('/groups', [GroupController::class, 'createGroup']);
 });
 // Route::get(('subscriptions/ICS'), [SubscriptionController::class, 'getICS'])->middleware('jwt:always:admin');
