@@ -6,12 +6,14 @@ use App\Http\Controllers\ItemOptionController;
 use App\Http\Controllers\ItemOptionIssueController;
 use App\Http\Controllers\ItemsController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('/auth')->group(function () {
   Route::post('login', [AuthController::class, 'login']);
   Route::post('register', [AuthController::class, 'register']);
   Route::post('whoami', [AuthController::class, 'whoAmI']);
+  Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
   Route::middleware('jwt')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
@@ -59,6 +61,7 @@ Route::prefix('/items')->middleware('jwt')->group(function () {
     });
   });
 });
+
 Route::prefix('/options')->middleware('jwt')->group(function () {
   Route::get('/issues', [ItemOptionIssueController::class, 'getIssuesForItems'])->middleware('jwt:admin');
   Route::prefix('/{option:id}')->group(function () {
@@ -77,4 +80,8 @@ Route::prefix('/features')->middleware('jwt')->group(function () {
   Route::post('/{feature:id}/click', [FeatureClickController::class, 'click']);
 });
 
+Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
+  Route::get('/users', [UserController::class, 'getPaginatedUsers']);
+  Route::post('/users', [UserController::class, 'createUser']);
+});
 // Route::get(('subscriptions/ICS'), [SubscriptionController::class, 'getICS'])->middleware('jwt:always:admin');

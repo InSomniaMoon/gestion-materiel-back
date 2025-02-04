@@ -6,11 +6,13 @@ use App\Enums\TokenType;
 use App\Models\RefreshToken;
 use App\Models\User;
 use App\Models\UserGroup;
-use Illuminate\Container\Attributes\Log;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
-use function Illuminate\Log\log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -42,8 +44,6 @@ class AuthController extends Controller
 
     $groups = UserGroup::where('user_id', $user->id)->with('group')->get();
 
-    // remove
-
     return response()->json(compact('token', 'refresh_token', 'user', 'groups'));
   }
 
@@ -67,6 +67,36 @@ class AuthController extends Controller
     ]);
 
     return response()->json($request = 201);
+  }
+
+  public function resetPassword(Request $request)
+  {
+    $validator = Validator::make($request->all(), [
+      'token' => 'required',
+      'email' => 'required|email',
+      'password' => 'required|min:8|confirmed',
+    ]);
+
+    Log::info($request->all());
+
+    if ($validator->fails()) {
+      return response()->json($validator->errors(), 400);
+    }
+
+    $status = Password::reset(
+      $request->only('email', 'password', 'password_confirmation', 'token'),
+      function (User $user, string $password) {
+        $user->forceFill([
+          'password' => Hash::make($password),
+        ]);
+
+        $user->save();
+      }
+    );
+
+    return $status === Password::PASSWORD_RESET
+        ? response()->json(['message' => __($status)], 200)
+        : response()->json(['message' => __($status)], 400);
   }
 
   public function whoAmI(Request $request)
@@ -106,11 +136,23 @@ class AuthController extends Controller
 
   private function generate_tokens($user)
   {
+    $user_groups = $user->userGroups()->get();
+    $admin_groups =
+        $user_groups->filter(function ($group) {
+          return $group->role === 'admin';
+        });
     // generate a uuidV7
     $refresh_token = uuid7();
     $token = JWTAuth::claims([
       'role' => $user->role,
       'type' => TokenType::ACCESS,
+      //   'user_groups' => UserGroup::where('user_id', $user->id)->get(),
+      'user_groups' => $user_groups->map(function ($group) {
+        return $group->group_id;
+      }),
+      'admin_groups' => $admin_groups->map(function ($group) {
+        return $group->group_id;
+      }),
     ])->fromUser($user);
 
     //save refresh token
