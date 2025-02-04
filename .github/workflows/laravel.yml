@@ -5,7 +5,7 @@ on:
     branches: ["main"]
 
 jobs:
-  deploy-appp:
+  deploy-app:
     runs-on: ubuntu-latest
     steps:
       - name: Setup SSH
@@ -15,7 +15,7 @@ jobs:
           echo "${{ secrets.SSH_PUB_KEY }}" > ~/.ssh/id_rsa.pub
           chmod 600 ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa.pub
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p 2222 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
           cat ~/.ssh/known_hosts
       - name: sync code to server
-        run: ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ~/gestion_materiel/back && git pull && composer install && ./vendor/bin/sail up -d --remove-orphans && ./vendor/bin/sail artisan migrate"
+        run: ssh -o StrictHostKeyChecking=no -p 2222 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ~/gestion_materiel/back && git pull && composer install && ./vendor/bin/sail up -d --remove-orphans && ./vendor/bin/sail artisan migrate"
