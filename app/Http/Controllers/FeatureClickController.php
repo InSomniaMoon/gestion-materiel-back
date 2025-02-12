@@ -11,12 +11,20 @@ class FeatureClickController extends Controller
 {
   public function click(Feature $feature)
   {
-    FeatureClick::updateOrCreate([
-      'feature_id' => $feature->id,
-      'user_id' => Auth::user()->id,
-    ], [
-      'clicks' => DB::raw('clicks + 1'),
-    ]);
+    // if the featureClick already exists, update the count
+    $featureClick = FeatureClick::where('feature_id', $feature->id)
+      ->where('user_id', Auth::id())
+      ->first();
+
+    if ($featureClick) {
+      $featureClick->increment('clicks');
+    } else {
+      $featureClick = new FeatureClick();
+      $featureClick->feature_id = $feature->id;
+      $featureClick->user_id = Auth::id();
+      $featureClick->clicks = 1;
+      $featureClick->save();
+    }
 
     return response()->json($feature);
   }

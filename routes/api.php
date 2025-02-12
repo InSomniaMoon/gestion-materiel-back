@@ -78,7 +78,7 @@ Route::prefix('/options')->middleware('jwt')->group(function () {
 });
 
 Route::prefix('/features')->middleware('jwt')->group(function () {
-  Route::post('/{feature:id}/click', [FeatureClickController::class, 'click']);
+  Route::post('/{feature:slug}/click', [FeatureClickController::class, 'click']);
 });
 
 Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
