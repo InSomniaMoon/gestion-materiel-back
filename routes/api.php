@@ -84,6 +84,8 @@ Route::prefix('/features')->middleware('jwt')->group(function () {
 Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
   Route::get('/users', [UserController::class, 'getPaginatedUsers']);
   Route::post('/users', [UserController::class, 'createUser']);
+  Route::get('/users/{user:id}/groups', [UserController::class, 'getUserGroups']);
+  Route::patch('/users/{user:id}/groups', [UserController::class, 'updateUserGroups']);
 
   Route::get('/groups', [GroupController::class, 'getGroups']);
   Route::post('/groups', [GroupController::class, 'createGroup']);
