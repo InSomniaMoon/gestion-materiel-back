@@ -16,6 +16,7 @@ class ItemOptionIssueController extends Controller
   {
     $validator = Validator::make($request->all(), [
       'value' => 'required',
+      'usable' => 'boolean',
     ]);
 
     if ($validator->fails()) {
@@ -27,6 +28,11 @@ class ItemOptionIssueController extends Controller
       'value' => trim($request->value),
       'item_option_id' => $option->id,
     ]);
+
+    if ($option->usable) {
+      $option->usable = $request->usable;
+      $option->save();
+    }
 
     return response()->json($issue, 201);
   }

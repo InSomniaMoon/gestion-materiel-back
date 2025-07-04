@@ -15,7 +15,7 @@ class ItemOptionController extends Controller
   {
     // ItemOption::where('item_id', $item->id)->get();
 
-    return response()->json($item->options()->get());
+    return response()->json($item->options()->orderBy('name')->get());
   }
 
   public function createOption(Item $item, Request $request)
