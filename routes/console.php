@@ -7,11 +7,23 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-Artisan::command('inspire', function () {
-  $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
+Artisan::command('create:group', function () {
+  $name = $this->ask('Entrer le nom du groupe', );
+  $description = $this->ask('Entrer la description du groupe', '');
 
-Artisan::command('create_admin', function () {
+  $group = new Group();
+  $group->name = $name;
+  $group->description = $description;
+
+  $this->info('Création du groupe...');
+  // begin transaction
+  DB::beginTransaction();
+  $group->save();
+  DB::commit();
+  $this->info('Groupe créé avec succès');
+})->purpose('Create a new group');
+
+Artisan::command('create:admin', function () {
   $this->info('Creating admin user');
   // ask for  'name', 'email', 'password', 'role', 'phone',
 
