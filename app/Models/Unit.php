@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Unit extends Model
+{
+    //
+  protected $table = 'units';
+
+  protected $fillable = ['name', 'abbreviation', 'color', 'group_id'];
+
+  public function group()
+  {
+    return $this->belongsTo(Group::class);
+  }
+}
