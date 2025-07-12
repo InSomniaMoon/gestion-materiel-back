@@ -127,10 +127,12 @@ class AuthController extends Controller
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
-    $groups = UserGroup::where('user_id', $user->id)->with('group')->get();
+    $groups = $user->userGroups()->get();
+
+    $units = $user->units()->get();
 
     return response()->json(
-      compact('user', 'groups', 'token', 'refresh_token')
+      compact('user', 'groups', 'units', 'token', 'refresh_token')
     );
   }
 
