@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\Validator;
 
 class GroupController extends Controller
 {
-  //
-
   public function getGroups(Request $request)
   {
     if (request()->get('all')) {
@@ -29,9 +27,9 @@ class GroupController extends Controller
     $size = $request->input('size', 25);
     $filter = $request->input('q', '');
 
-    $groups = Group::where('name', 'ilike', '%'.$filter.'%')
-      ->orWhere('description', 'ilike', '%'.$filter.'%')
-      ->simplePaginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
+    $groups = Group::where('name', 'ilike', "%$filter%")
+      ->orWhere('description', 'ilike', "%$filter%")
+      ->simplePaginate($size, ['*'], 'page', $page)
       ->withQueryString();
 
     return response()->json($groups);

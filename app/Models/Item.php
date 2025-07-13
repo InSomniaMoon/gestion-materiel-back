@@ -9,14 +9,14 @@ use Illuminate\Database\Eloquent\Model;
 class Item extends Model
 {
   use HasFactory;
-    //     -- un item est un objet, une salle, une tente empreintable.
+  //     -- un item est un objet, une salle, une tente empreintable.
   // CREATE TABLE IF NOT EXISTS `items` (
-    //   `id` BIGINT(11) NOT NULL AUTO_INCREMENT,
-    //   `name` varchar(255) NOT NULL,
-    //   `description` text NOT NULL,
-    //   `category` varchar(255) NOT NULL,
-    //   `usable` BOOLEAN NOT NULL DEFAULT true,
-    //   PRIMARY KEY (`id`)
+  //   `id` BIGINT(11) NOT NULL AUTO_INCREMENT,
+  //   `name` varchar(255) NOT NULL,
+  //   `description` text NOT NULL,
+  //   `category` varchar(255) NOT NULL,
+  //   `usable` BOOLEAN NOT NULL DEFAULT true,
+  //   PRIMARY KEY (`id`)
   // ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
   protected $fillable = [
@@ -24,7 +24,9 @@ class Item extends Model
     'description',
     'category',
     'usable',
+    'date_of_buy',
     'group_id',
+    'category_id',
   ];
 
   protected $hidden = [
@@ -57,10 +59,16 @@ class Item extends Model
     return $this->belongsTo(Group::class);
   }
 
+  public function category()
+  {
+    return $this->belongsTo(ItemCategory::class);
+  }
+
   public static $validation = [
     'name' => 'required|max:255',
-    'description' => 'required|max:255',
-    'category' => 'required|max:255',
+    'description' => 'max:255',
+    'category_id' => 'required|exists:item_categories,id',
     'usable' => 'boolean',
+    'date_of_buy' => 'date|nullable', // date format: YYYY-MM-DD
   ];
 }

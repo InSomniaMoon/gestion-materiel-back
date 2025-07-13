@@ -32,9 +32,9 @@ class UserController extends Controller
       whereHas('userGroups', function ($query) use ($request) {
         $query->where('group_id', $request->input('group_id'));
       })
-      ->where('name', 'like', '%'.$filter.'%')
-      ->orWhere('email', 'like', '%'.$filter.'%')
-      ->simplePaginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
+      ->where('name', 'like', "%$filter%")
+      ->orWhere('email', 'like', "%$filter%")
+      ->simplePaginate($perPage = $size, ['*'], 'page', $page)
       ->withPath('/users')
       ->withQueryString();
 
@@ -57,8 +57,8 @@ class UserController extends Controller
     $size = $request->input('size', 25);
     $filter = $request->input('q', '');
 
-    $users = User::where('name', 'like', '%'.$filter.'%')
-      ->orWhere('email', 'like', '%'.$filter.'%')
+    $users = User::where('name', 'like', "%$filter%")
+      ->orWhere('email', 'like', "%$filter%")
       ->simplePaginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       ->withQueryString();
