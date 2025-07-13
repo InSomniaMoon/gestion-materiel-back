@@ -12,6 +12,17 @@ use App\Http\Controllers\UnitsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
+Route::get(
+  '/storage/{path}',
+  function ($path) {
+    if (! Storage::disk('public')->exists($path)) {
+      abort(404, 'File not found');
+    }
+
+    // Return the file as a response
+    return response()->file(storage_path("app/public/$path"));
+  }
+)->where('path', '.*');
 Route::prefix('/auth')->group(function () {
   Route::post('login', [AuthController::class, 'login']);
   Route::post('register', [AuthController::class, 'register']);
@@ -97,4 +108,5 @@ Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
 
   Route::get('/groups', [GroupController::class, 'getGroups']);
   Route::post('/groups', [GroupController::class, 'createGroup']);
+  Route::post('/groups/image', [GroupController::class, 'uploadFile']);
 });
