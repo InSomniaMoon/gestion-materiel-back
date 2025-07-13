@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\UserGroup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ItemsController extends Controller
@@ -75,7 +76,7 @@ class ItemsController extends Controller
       'group_id' => 'required|exists:groups,id',
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:1',
-      'order_by' => 'in:name,created_at,updated_at',
+      'order_by' => 'in:name,created_at,updated_at,category_id',
       'category_id' => 'nullable|exists:item_categories,id',
     ]);
 
@@ -89,17 +90,20 @@ class ItemsController extends Controller
       ->with('category')
       ->orderBy($orderBy);
 
+    if ($category) {
+      $items = $items->where('category_id', $category);
+    }
+
     if ($search) {
       $items = $items
         ->where(function ($query) use ($search) {
           $query
-            ->where('name', 'like', "%$search%")
-            ->orWhere('description', 'like', "%$search%");
+            ->where(DB::raw('lower(name)'), 'like', '%'.strtolower($search).'%')
+            ->orWhere(DB::raw('lower(description)'), 'like', '%'.strtolower($search).'%');
+        })
+        ->orWhereHas('category', function ($query) use ($search) {
+          $query->where(DB::raw('lower(name)'), 'like', '%'.strtolower($search).'%');
         });
-    }
-
-    if ($category) {
-      $items = $items->where('category_id', $category);
     }
 
     $items = $items->paginate($perPage = $size, $columns = ['*'], 'page', $page)

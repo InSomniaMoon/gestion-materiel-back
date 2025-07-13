@@ -24,6 +24,7 @@ class Item extends Model
     'description',
     'category',
     'usable',
+    'date_of_buy',
     'group_id',
     'category_id',
   ];
@@ -68,5 +69,6 @@ class Item extends Model
     'description' => 'max:255',
     'category_id' => 'required|exists:item_categories,id',
     'usable' => 'boolean',
+    'date_of_buy' => 'date|nullable', // date format: YYYY-MM-DD
   ];
 }

@@ -30,6 +30,7 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::post('items/categories', [ItemCategoryController::class, 'store']);
   Route::patch('items/categories/{category:id}', [ItemCategoryController::class, 'update']);
   Route::delete('items/categories/{category:id}', [ItemCategoryController::class, 'destroy']);
+
   Route::post('items', [ItemsController::class, 'createItem']);
   Route::delete('items/{item:id}', [ItemsController::class, 'destroy']);
   Route::put('items/{item:id}', [ItemsController::class, 'update']);
