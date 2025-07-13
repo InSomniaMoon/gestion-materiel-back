@@ -20,7 +20,7 @@ return new class extends Migration {
     });
 
     Schema::create('unit_users', function (Blueprint $table) {
-      $table->id();
+      $table->primary(['unit_id', 'user_id']);
       $table->foreignId('unit_id')->references('id')->on('units')->constrained()->onDelete('cascade');
       $table->foreignId('user_id')->references('id')->on('users')->constrained()->onDelete('cascade');
     });
@@ -36,7 +36,11 @@ return new class extends Migration {
    */
   public function down(): void
   {
-    Schema::dropIfExists('units');
+    Schema::table('item_subscriptions', function (Blueprint $table) {
+      $table->dropForeign(['unit_id']);
+      $table->dropColumn('unit_id');
+    });
     Schema::dropIfExists('unit_users');
+    Schema::dropIfExists('units');
   }
 };

@@ -41,6 +41,7 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
 
   Route::get('units', [UnitsController::class, 'getUnits']);
   Route::post('units', [UnitsController::class, 'createUnit']);
+  Route::patch('units/{unit:id}', [UnitsController::class, 'updateUnit']);
 });
 
 Route::prefix('/items')->middleware('jwt')->group(function () {

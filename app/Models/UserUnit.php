@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Pivot;
+use Thiagoprz\CompositeKey\HasCompositeKey;
 
-class UserUnit extends Model
+class UserUnit extends Pivot
 {
-  protected $table = 'unit_users';
+  use HasCompositeKey;
+
+  protected $primaryKey = ['user_id', 'unit_id'];
+
+  protected $table = 'user_unit';
 
   protected $fillable = ['user_id', 'unit_id'];
 
