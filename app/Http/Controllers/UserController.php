@@ -17,7 +17,36 @@ class UserController extends Controller
     $validator = Validator::make($request->all(), [
       'page' => 'integer|min:1',
       'size' => 'integer|min:1',
-      'filter' => 'string',
+      'q' => 'string',
+    ]);
+
+    if ($validator->fails()) {
+      return response()->json($validator->errors(), 400);
+    }
+
+    $page = $request->input('page', 1);
+    $size = $request->input('size', 25);
+    $filter = $request->input('q', '');
+
+    $users = User::
+      whereHas('userGroups', function ($query) use ($request) {
+        $query->where('group_id', $request->input('group_id'));
+      })
+      ->where('name', 'like', '%'.$filter.'%')
+      ->orWhere('email', 'like', '%'.$filter.'%')
+      ->simplePaginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
+      ->withPath('/users')
+      ->withQueryString();
+
+    return response()->json($users);
+  }
+
+  public function getBackofficePaginatedUsers(Request $request)
+  {
+    $validator = Validator::make($request->all(), [
+      'page' => 'integer|min:1',
+      'size' => 'integer|min:1',
+      'q' => 'string|nullable',
     ]);
 
     if ($validator->fails()) {
@@ -30,7 +59,7 @@ class UserController extends Controller
 
     $users = User::where('name', 'like', '%'.$filter.'%')
       ->orWhere('email', 'like', '%'.$filter.'%')
-      ->simplePaginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
+      ->simplePaginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       ->withQueryString();
 

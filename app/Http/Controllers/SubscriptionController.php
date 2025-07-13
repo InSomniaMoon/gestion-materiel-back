@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class SubscriptionController extends Controller
 {
@@ -17,16 +18,17 @@ class SubscriptionController extends Controller
       'name' => 'required',
       'start_date' => 'required|date',
       'end_date' => 'required|date',
-      // $request->user()->group_id == $item->group_id
       'group_id' => 'required|exists:groups,id',
+      'unit_id' => 'required|exists:units,id',
     ]);
 
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
-
+    $payload = JWTAuth::parseToken()->getPayload();
+    $groups = $payload->get('user_groups');
     // check that the user is in the same group as the item
-    if (0 == $request->user()->userGroups()->where('group_id', $item->group_id)->count()) {
+    if (! in_array($item->group_id, $groups)) {
       return response()->json(['message' => 'Unauthorized'], 401);
     }
 
@@ -34,10 +36,10 @@ class SubscriptionController extends Controller
     $end_date = $request->end_date;
 
     $subscriptions = $item->subscriptions()
-        ->where('status', '<>', 'canceled')
-        ->where('start_date', '<', $end_date)
-        ->where('end_date', '>', $start_date)
-        ->get();
+      ->where('status', '<>', 'canceled')
+      ->where('start_date', '<', $end_date)
+      ->where('end_date', '>', $start_date)
+      ->get();
 
     if ($subscriptions->count() > 0) {
       return response()->json(['message' => "L'Item est déjà utilisé sur les dates demandées."], Response::HTTP_CONFLICT);
@@ -49,6 +51,7 @@ class SubscriptionController extends Controller
       'end_date' => $request->end_date,
       'user_id' => Auth::user()->id,
       'status' => 'active',
+      'unit_id' => $request->unit_id,
     ]);
 
     return response()->json($subscription, 201);
@@ -76,31 +79,31 @@ class SubscriptionController extends Controller
 
   // function getICS(Request $request)
   // {
-    //     // get all the subscriptions of the user
-    //     $subscriptions = ItemSubscription::where("start_date", ">=", "NOW()")->get();
-    //     Log::info($subscriptions);
+  //     // get all the subscriptions of the user
+  //     $subscriptions = ItemSubscription::where("start_date", ">=", "NOW()")->get();
+  //     Log::info($subscriptions);
 
-    //     $ics_file =
-    //         $subscriptions->map(function ($subscription) {
-    //             return new ICS([
-    //                 'start_date' => $subscription->start_date,
-    //                 'end_date' => $subscription->end_date,
-    //                 'summary' => $subscription->name,
+  //     $ics_file =
+  //         $subscriptions->map(function ($subscription) {
+  //             return new ICS([
+  //                 'start_date' => $subscription->start_date,
+  //                 'end_date' => $subscription->end_date,
+  //                 'summary' => $subscription->name,
 
-    //                 'uid' => $subscription->id,
-    //                 'sequence' => 0,
-    //                 'dtstart' => $subscription->start_date,
-    //                 'dtend' => $subscription->end_date,
-    //             ]);
-    //         })->map(function ($ics) {
-    //             return $ics->toString();
-    //         })->implode("\n");
+  //                 'uid' => $subscription->id,
+  //                 'sequence' => 0,
+  //                 'dtstart' => $subscription->start_date,
+  //                 'dtend' => $subscription->end_date,
+  //             ]);
+  //         })->map(function ($ics) {
+  //             return $ics->toString();
+  //         })->implode("\n");
 
-    //     return response($ics_file, 200, [
-    //         'Content-Type' => 'text/calendar',
-    //         'Content-Disposition' => 'attachment; filename="calendar.ics"'
-    //     ]);
+  //     return response($ics_file, 200, [
+  //         'Content-Type' => 'text/calendar',
+  //         'Content-Disposition' => 'attachment; filename="calendar.ics"'
+  //     ]);
 
-    //     return response()->json([], 200);
+  //     return response()->json([], 200);
   // }
 }

@@ -14,8 +14,14 @@ class Group extends Model
 
   public function users()
   {
-    // one user is in one group, one group has many users
-    return $this->hasMany(User::class);
+    return $this->belongsToMany(User::class, UserGroup::class, 'group_id', 'user_id')
+      ->using(UserGroup::class)
+      ->withPivot('role');
+  }
+
+  public function userGroups()
+  {
+    return $this->hasMany(UserGroup::class, 'group_id');
   }
 
   public function items()

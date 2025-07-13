@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Thiagoprz\CompositeKey\HasCompositeKey;
 
-class UserGroup extends Model
+class UserGroup extends Pivot
 {
   use HasCompositeKey;
 
