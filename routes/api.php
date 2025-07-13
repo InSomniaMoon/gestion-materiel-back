@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FeatureClickController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\ItemCategoryController;
 use App\Http\Controllers\ItemOptionController;
 use App\Http\Controllers\ItemOptionIssueController;
 use App\Http\Controllers\ItemsController;
@@ -25,6 +26,10 @@ Route::prefix('/auth')->group(function () {
 Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::get('users', [UserController::class, 'getPaginatedUsers']);
 
+  Route::get('items/categories', [ItemCategoryController::class, 'index']);
+  Route::post('items/categories', [ItemCategoryController::class, 'store']);
+  Route::patch('items/categories/{category:id}', [ItemCategoryController::class, 'update']);
+  Route::delete('items/categories/{category:id}', [ItemCategoryController::class, 'destroy']);
   Route::post('items', [ItemsController::class, 'createItem']);
   Route::delete('items/{item:id}', [ItemsController::class, 'destroy']);
   Route::put('items/{item:id}', [ItemsController::class, 'update']);
