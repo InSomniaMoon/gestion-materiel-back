@@ -42,9 +42,13 @@ class AuthController extends Controller
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
-    $groups = UserGroup::where('user_id', $user->id)->with('group')->get();
+    $groups = $user->userGroups()->get();
 
-    return response()->json(compact('token', 'refresh_token', 'user', 'groups'));
+    $units = $user->units()->get();
+
+    return response()->json(
+      compact('user', 'groups', 'units', 'token', 'refresh_token')
+    );
   }
 
   // User registration
@@ -141,7 +145,7 @@ class AuthController extends Controller
     $user_groups = $user->userGroups()->get();
     $admin_groups =
         $user_groups->filter(function ($group) {
-          return $group->role === 'admin';
+          return $group->pivot->role === 'admin';
         });
     // generate a uuidV7
     $refresh_token = uuid7();
@@ -150,10 +154,10 @@ class AuthController extends Controller
       'type' => TokenType::ACCESS,
       //   'user_groups' => UserGroup::where('user_id', $user->id)->get(),
       'user_groups' => $user_groups->map(function ($group) {
-        return $group->group_id;
+        return $group->id;
       }),
       'admin_groups' => $admin_groups->map(function ($group) {
-        return $group->group_id;
+        return $group->id;
       }),
     ])->fromUser($user);
 

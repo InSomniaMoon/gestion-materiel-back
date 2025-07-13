@@ -29,7 +29,6 @@ class User extends Authenticatable implements JWTSubject
     'password',
     'role',
     'phone',
-    'group_id',
   ];
 
   /**
@@ -59,7 +58,9 @@ class User extends Authenticatable implements JWTSubject
 
   public function userGroups()
   {
-    return $this->hasMany(UserGroup::class, 'user_id');
+    return $this->belongsToMany(Group::class, UserGroup::class, 'user_id', 'group_id')
+      ->using(UserGroup::class)
+      ->withPivot('role');
   }
 
   public function getJWTIdentifier()

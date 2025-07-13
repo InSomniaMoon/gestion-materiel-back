@@ -29,10 +29,10 @@ class UserController extends Controller
     $filter = $request->input('q', '');
 
     $users = User::
-    whereHas('userGroups', function ($query) use ($request) {
-      $query->where('group_id', $request->input('group_id'));
-    })
-    ->where('name', 'like', '%'.$filter.'%')
+      whereHas('userGroups', function ($query) use ($request) {
+        $query->where('group_id', $request->input('group_id'));
+      })
+      ->where('name', 'like', '%'.$filter.'%')
       ->orWhere('email', 'like', '%'.$filter.'%')
       ->simplePaginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
       ->withPath('/users')
@@ -46,7 +46,7 @@ class UserController extends Controller
     $validator = Validator::make($request->all(), [
       'page' => 'integer|min:1',
       'size' => 'integer|min:1',
-      'q' => 'string',
+      'q' => 'string|nullable',
     ]);
 
     if ($validator->fails()) {
@@ -59,7 +59,7 @@ class UserController extends Controller
 
     $users = User::where('name', 'like', '%'.$filter.'%')
       ->orWhere('email', 'like', '%'.$filter.'%')
-      ->simplePaginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
+      ->simplePaginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       ->withQueryString();
 
