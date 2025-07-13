@@ -9,14 +9,14 @@ use Illuminate\Database\Eloquent\Model;
 class Item extends Model
 {
   use HasFactory;
-    //     -- un item est un objet, une salle, une tente empreintable.
+  //     -- un item est un objet, une salle, une tente empreintable.
   // CREATE TABLE IF NOT EXISTS `items` (
-    //   `id` BIGINT(11) NOT NULL AUTO_INCREMENT,
-    //   `name` varchar(255) NOT NULL,
-    //   `description` text NOT NULL,
-    //   `category` varchar(255) NOT NULL,
-    //   `usable` BOOLEAN NOT NULL DEFAULT true,
-    //   PRIMARY KEY (`id`)
+  //   `id` BIGINT(11) NOT NULL AUTO_INCREMENT,
+  //   `name` varchar(255) NOT NULL,
+  //   `description` text NOT NULL,
+  //   `category` varchar(255) NOT NULL,
+  //   `usable` BOOLEAN NOT NULL DEFAULT true,
+  //   PRIMARY KEY (`id`)
   // ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
   protected $fillable = [
@@ -25,6 +25,7 @@ class Item extends Model
     'category',
     'usable',
     'group_id',
+    'category_id',
   ];
 
   protected $hidden = [
@@ -55,6 +56,11 @@ class Item extends Model
   public function group()
   {
     return $this->belongsTo(Group::class);
+  }
+
+  public function category()
+  {
+    return $this->belongsTo(ItemCategory::class);
   }
 
   public static $validation = [

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\ItemCategory;
 use App\Models\UserGroup;
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -19,9 +21,11 @@ class ItemsController extends Controller
       return response()->json($validator->errors(), 400);
     }
 
-    if (! UserGroup::where('user_id', $request->user()->id)
-      ->where('group_id', $group_id)
-      ->firstOrFail()) {
+    if (
+      ! UserGroup::where('user_id', $request->user()->id)
+        ->where('group_id', $group_id)
+        ->firstOrFail()
+    ) {
       return response()->json(['message' => 'Unauthorized'], 401);
     }
 
@@ -66,10 +70,14 @@ class ItemsController extends Controller
     $search = $request->query('q');
     $group_id = $request->query('group_id');
 
-    $category = $request->query('category');
+    $category = $request->query('category_id');
 
     $validator = Validator::make($request->all(), [
       'group_id' => 'required|exists:groups,id',
+      'size' => 'integer|min:1|max:100',
+      'page' => 'integer|min:1',
+      'order_by' => 'in:name,created_at,updated_at',
+      'category_id' => 'nullable|exists:item_categories,id',
     ]);
 
     if ($validator->fails()) {
@@ -92,10 +100,10 @@ class ItemsController extends Controller
     }
 
     if ($category) {
-      $items = $items->where('category', 'like', "%$category%");
+      $items = $items->where('category_id', $category);
     }
 
-    $items = $items->paginate($perPage = $size, $columns = ['*'], $pageName = 'page', $page = $page)
+    $items = $items->paginate($perPage = $size, $columns = ['*'], 'page', $page)
       ->withPath('/items')
       // set the query string for the next page
       ->withQueryString();
@@ -105,9 +113,11 @@ class ItemsController extends Controller
 
   public function show(Request $request, Item $item)
   {
-    if (! UserGroup::where('user_id', $request->user()->id)
-      ->where('group_id', $item->group_id)
-      ->firstOrFail()) {
+    if (
+      ! UserGroup::where('user_id', $request->user()->id)
+        ->where('group_id', $item->group_id)
+        ->firstOrFail()
+    ) {
       return response()->json(['message' => 'Unauthorized'], 401);
     }
 
@@ -140,8 +150,13 @@ class ItemsController extends Controller
 
   public function getCategories()
   {
-    // get all distinct 'category' values from the 'items' table
-    $categories = Item::distinct()->pluck('category');
+    $group_id = request()->query('group_id');
+    // get distinct name of the categories of items for the group
+    $categories = ItemCategory::whereHas('items', function ($q) use ($group_id) {
+      $q->where('group_id', $group_id);
+    })
+      ->distinct('name')
+      ->get(['id', 'name']);
 
     return response()->json($categories);
   }
