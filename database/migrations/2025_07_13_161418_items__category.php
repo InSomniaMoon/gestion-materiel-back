@@ -12,12 +12,23 @@ return new class extends Migration {
   {
     Schema::create('item_categories', function (Blueprint $table) {
       $table->id();
-      $table->string('name')->unique();
+      $table->string('name');
+      $table->foreignId('group_id')->constrained('groups')->onDelete('cascade');
     });
 
     Schema::table('items', function (Blueprint $table) {
       $table->foreignId('category_id')->nullable()->constrained('item_categories')->onDelete('set null');
       $table->dropColumn('category');
+    });
+
+    Schema::table('groups', function (Blueprint $table) {
+      $table->string('description')->nullable()->change();
+    });
+    Schema::table('items', function (Blueprint $table) {
+      $table->string('description')->nullable()->change();
+    });
+    Schema::table('item_options', function (Blueprint $table) {
+      $table->string('description')->nullable()->change();
     });
   }
 
@@ -27,7 +38,7 @@ return new class extends Migration {
   public function down(): void
   {
     Schema::table('items', function (Blueprint $table) {
-      $table->string('category');
+      $table->string('category')->nullable();
       $table->dropForeign(['category_id']);
       $table->dropColumn('category_id');
     });

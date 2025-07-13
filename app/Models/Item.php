@@ -65,8 +65,8 @@ class Item extends Model
 
   public static $validation = [
     'name' => 'required|max:255',
-    'description' => 'required|max:255',
-    'category' => 'required|max:255',
+    'description' => 'max:255',
+    'category_id' => 'required|exists:item_categories,id',
     'usable' => 'boolean',
   ];
 }

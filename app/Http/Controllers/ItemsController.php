@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\UserGroup;
-use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -32,7 +31,7 @@ class ItemsController extends Controller
     $item = new Item([
       'name' => $request->name,
       'description' => $request->description,
-      'category' => $request->category,
+      'category_id' => $request->category_id,
       'group_id' => $group_id,
     ]);
     $item->save();
@@ -87,7 +86,7 @@ class ItemsController extends Controller
     // Get all items paginated with their itemOptions
 
     $items = Item::where('group_id', $group_id)
-      // ->with('options')
+      ->with('category')
       ->orderBy($orderBy);
 
     if ($search) {
@@ -152,10 +151,12 @@ class ItemsController extends Controller
   {
     $group_id = request()->query('group_id');
     // get distinct name of the categories of items for the group
-    $categories = ItemCategory::whereHas('items', function ($q) use ($group_id) {
-      $q->where('group_id', $group_id);
-    })
+    $categories = ItemCategory::where(
+      'group_id',
+      $group_id
+    )
       ->distinct('name')
+      ->orderBy('name')
       ->get(['id', 'name']);
 
     return response()->json($categories);
