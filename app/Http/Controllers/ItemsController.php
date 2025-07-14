@@ -8,6 +8,8 @@ use App\Models\UserGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Intervention\Image\Laravel\Facades\Image;
+use Storage;
 
 class ItemsController extends Controller
 {
@@ -164,5 +166,34 @@ class ItemsController extends Controller
       ->get(['id', 'name']);
 
     return response()->json($categories);
+  }
+
+  public function uploadFile(Request $request)
+  {
+    $validation = Validator::make($request->all(), [
+      'image' => 'required|image|max:2048',
+
+    ]);
+
+    if ($validation->fails()) {
+      return response()->json($validation->errors(), 400);
+    }
+
+    if ($request->hasFile('image')) {
+      $image = $request->file('image');
+      $resizedImage = Image::read($image)->resize(128, 128);
+      $tempPath = tempnam(sys_get_temp_dir(), 'group_img');
+      $resizedImage->save($tempPath);
+      $path = Storage::disk('public')->putFile(
+        'items',
+        new \Illuminate\Http\File($tempPath),
+        ['visibility' => 'public']
+      );
+      unlink($tempPath);
+    }
+
+    return response()->json([
+      'path' => $path ?? null,
+    ], 201);
   }
 }
