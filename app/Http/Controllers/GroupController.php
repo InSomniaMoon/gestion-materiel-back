@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Group;
 use Illuminate\Http\Request;
+use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
+use Log;
 use Storage;
 use Str;
 
@@ -42,7 +44,7 @@ class GroupController extends Controller
   {
     $request->validate([
       'name' => 'required|string',
-      'image' => 'nullable|image|max:2048',
+      'image' => 'nullable|string',
     ]);
 
     $group = new Group();
@@ -53,6 +55,33 @@ class GroupController extends Controller
 
     return response()->json([
       'message' => 'Group created successfully',
+      'group' => $group,
+    ]);
+  }
+
+  public function updateGroup(Request $request, Group $group)
+  {
+    $request->validate([
+      'name' => 'required|string',
+      'image' => 'nullable|string',
+      'description' => 'nullable|string',
+    ]);
+
+    $group->name = $request->name;
+    $group->description = $request->description;
+
+    if ($request->input('image')) {
+      // delete old image if exists
+      if ($group->image) {
+        Storage::disk('public')->delete($group->image);
+      }
+      $group->image = $request->image;
+    }
+
+    $group->save();
+
+    return response()->json([
+      'message' => 'Group updated successfully',
       'group' => $group,
     ]);
   }

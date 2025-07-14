@@ -108,5 +108,6 @@ Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
 
   Route::get('/groups', [GroupController::class, 'getGroups']);
   Route::post('/groups', [GroupController::class, 'createGroup']);
+  Route::put('/groups/{group:id}', [GroupController::class, 'updateGroup']);
   Route::post('/groups/image', [GroupController::class, 'uploadFile']);
 });
