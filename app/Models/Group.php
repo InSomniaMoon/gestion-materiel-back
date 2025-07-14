@@ -8,7 +8,7 @@ class Group extends Model
 {
   protected $table = 'groups';
 
-  protected $fillable = ['name', 'description'];
+  protected $fillable = ['name', 'description', 'image'];
 
   public $timestamps = false;
 

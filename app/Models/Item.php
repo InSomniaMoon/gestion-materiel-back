@@ -27,6 +27,7 @@ class Item extends Model
     'date_of_buy',
     'group_id',
     'category_id',
+    'image',
   ];
 
   protected $hidden = [
