@@ -39,6 +39,7 @@ class ItemsController extends Controller
       'description' => $request->description,
       'category_id' => $request->category_id,
       'group_id' => $group_id,
+      'image' => $request->image,
     ]);
     $item->save();
 
@@ -142,7 +143,7 @@ class ItemsController extends Controller
     $item->date_of_buy = $request->date_of_buy
       ? date('Y-m-d', strtotime($request->date_of_buy))
       : null;
-
+    $item->image = $request->image;
     $options = $request->options ?? [];
 
     // Synchroniser les options
