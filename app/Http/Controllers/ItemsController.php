@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\ItemCategory;
+use App\Models\ItemOption;
+use App\Models\ItemSubscription;
 use App\Models\UserGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
+use Log;
 use Storage;
 
 class ItemsController extends Controller
@@ -38,6 +41,7 @@ class ItemsController extends Controller
       'group_id' => $group_id,
     ]);
     $item->save();
+
     if ($request->has('options')) {
       // validation for options
       $validator = Validator::make($request->options, [
@@ -45,19 +49,12 @@ class ItemsController extends Controller
         '*.description' => 'max:255',
       ]);
 
-      // map through the options and add 'usable' to each option
-
       if ($validator->fails()) {
         return response()->json($validator->errors(), 400);
       }
 
-      $options = array_map(function ($option) {
-        $option['usable'] = $option['usable'] ?? true;
-
-        return $option;
-      }, $request->options);
-
-      $item->options()->createMany($options);
+      // Synchroniser les options (pour la création, toutes les options sont nouvelles)
+      $this->syncOptions($item, $request->options);
     }
 
     return response()->json($item, 201);
@@ -90,6 +87,7 @@ class ItemsController extends Controller
 
     $items = Item::where('group_id', $group_id)
       ->with('category')
+      ->with('options')
       ->orderBy($orderBy);
 
     if ($category) {
@@ -139,15 +137,82 @@ class ItemsController extends Controller
 
     $item->name = $request->name;
     $item->description = $request->description;
-    $item->category = $request->category;
+    $item->category_id = $request->category_id;
     $item->usable = $request->usable ?? $item->usable;
+    $item->date_of_buy = $request->date_of_buy
+      ? date('Y-m-d', strtotime($request->date_of_buy))
+      : null;
+
+    $options = $request->options ?? [];
+
+    // Synchroniser les options
+    $this->syncOptions($item, $options);
+
     $item->save();
 
     return response()->json($item);
   }
 
+  /**
+   * Synchronise les options d'un item
+   * - Supprime les options qui ne sont plus dans la liste
+   * - Crée ou met à jour les options existantes
+   */
+  private function syncOptions(Item $item, array $options)
+  {
+    // Récupérer les IDs des options existantes
+    $existingOptionIds = $item->options()->pluck('id')->toArray();
+
+    // Récupérer les IDs des options envoyées (filtrer les null/0)
+    $submittedOptionIds = collect($options)
+      ->pluck('id')
+      ->filter(function ($id) {
+        return $id !== null && $id !== 0;
+      })
+      ->toArray();
+
+    // Supprimer les options qui ne sont plus dans la liste
+    $optionsToDelete = array_diff($existingOptionIds, $submittedOptionIds);
+    if (! empty($optionsToDelete)) {
+      $item->options()->whereIn('id', $optionsToDelete)->delete();
+    }
+
+    // Créer ou mettre à jour les options
+    foreach ($options as $optionData) {
+      // Préparer les données de l'option
+      $optionData['usable'] = $optionData['usable'] ?? true;
+      $optionData['item_id'] = $item->id;
+
+      if (isset($optionData['id']) && $optionData['id'] > 0) {
+        // Mettre à jour l'option existante
+        $item->options()->where('id', $optionData['id'])->update([
+          'name' => $optionData['name'],
+          'description' => $optionData['description'] ?? '',
+          'usable' => $optionData['usable'],
+        ]);
+      } else {
+        // Créer une nouvelle option
+        $item->options()->create([
+          'name' => $optionData['name'],
+          'description' => $optionData['description'] ?? '',
+          'usable' => $optionData['usable'],
+        ]);
+      }
+    }
+  }
+
   public function destroy(Item $item)
   {
+    if (
+      ItemSubscription::where('item_id', $item->id)->where('start_date', '<=', now())
+        ->where('end_date', '>=', now())->count()
+    ) {
+      return response()->json(
+        ['message' => 'Suppression impossible, il y a des événements à venir pour cet objet'],
+        429
+      );
+    }
+
     $item->delete();
 
     return response()->json(null, 204);
