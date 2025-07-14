@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Log;
 
 class UserController extends Controller
 {
@@ -104,7 +105,7 @@ class UserController extends Controller
 
   public function getUserGroups(Request $request, User $user)
   {
-    $groups = $user->userGroups()->with('group')->get();
+    $groups = $user->userGroups()->get();
 
     return response()->json($groups);
   }
@@ -123,31 +124,31 @@ class UserController extends Controller
    */
   public function updateUserGroups(Request $request, User $user)
   {
-    $validator = Validator::make($request->all(), [
-      'groups_to_add' => 'array',
-      'groups_to_add.*.id' => 'integer',
-      'groups_to_add.*.role' => 'string',
-      'groups_to_remove' => 'array',
-      'groups_to_remove.*' => 'integer',
-      'groups_to_update' => 'array',
-      'groups_to_update.*.id' => 'integer',
-      'groups_to_update.*.role' => 'string',
+    $groups = $request->input('groups', []);
+
+    // Remove all user groups for this user
+    UserGroup::where('user_id', $user->id)->delete();
+
+    // Prepare new user groups for insertion
+    $insertData = [];
+    foreach ($groups as $group) {
+      if (! empty($group['group_id']) && $group['group_id'] > 0) {
+        $insertData[] = [
+          'user_id' => $user->id,
+          'group_id' => $group['group_id'],
+          'role' => $group['role'] ?? 'user',
+        ];
+      }
+    }
+
+    Log::info('Updating user groups', [
+      'insertData' => $insertData,
     ]);
 
-    if ($validator->fails()) {
-      return response()->json($validator->errors(), 400);
+    if (! empty($insertData)) {
+      UserGroup::insert($insertData);
     }
 
-    $user->groups()->detach($request->input('groups_to_remove'));
-
-    foreach ($request->input('groups_to_add') as $group) {
-      $user->groups()->attach($group['id'], ['role' => $group['role']]);
-    }
-
-    foreach ($request->input('groups_to_update') as $group) {
-      $user->groups()->updateExistingPivot($group['id'], ['role' => $group['role']]);
-    }
-
-    return response();
+    return response()->json();
   }
 }
