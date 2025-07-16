@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
-use Log;
 use Storage;
 
 class ItemsController extends Controller
@@ -181,7 +180,7 @@ class ItemsController extends Controller
     // Créer ou mettre à jour les options
     foreach ($options as $optionData) {
       // Préparer les données de l'option
-      $optionData['usable'] = $optionData['usable'] ?? true;
+      $optionData['usable'] ??= true;
       $optionData['item_id'] = $item->id;
 
       if (isset($optionData['id']) && $optionData['id'] > 0) {

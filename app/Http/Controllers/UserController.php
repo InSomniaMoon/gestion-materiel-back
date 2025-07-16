@@ -31,11 +31,11 @@ class UserController extends Controller
 
     $users = User::
       whereHas('userGroups', function ($query) use ($request) {
-        $query->where('group_id', $request->input('group_id'));
+        $query->where('id', $request->input('group_id'));
       })
       ->where('name', 'like', "%$filter%")
       ->orWhere('email', 'like', "%$filter%")
-      ->simplePaginate($perPage = $size, ['*'], 'page', $page)
+      ->simplePaginate($size, ['*'], 'page', $page)
       ->withPath('/users')
       ->withQueryString();
 
