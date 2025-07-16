@@ -14,12 +14,12 @@ class ItemOptionIssue extends Model
   ];
 
   protected $hidden = [
-    'created_at',
     'updated_at',
   ];
 
   protected $casts = [
     'date_resolution' => 'date',
+
   ];
 
   // rename created_at to date_declaration

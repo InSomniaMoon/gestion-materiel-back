@@ -48,7 +48,7 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::put('items/{item:id}', [ItemsController::class, 'update']);
 
   Route::post('items/{item:id}/options', [ItemOptionController::class, 'createOption']);
-  Route::get('items/{item:id}/options/issues', [ItemOptionIssueController::class, 'getIssuesForItems']);
+  Route::get('items/{item:id}/options/issues', [ItemOptionIssueController::class, 'getIssuesForItem']);
   Route::put('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'updateOption']);
   Route::delete('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'deleteOption']);
   Route::get('items/{item:id}/options/{option:id}issues', [ItemOptionIssueController::class, 'getIssues']);
@@ -64,29 +64,19 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
 
 Route::prefix('/items')->middleware('jwt')->group(function () {
   Route::get('/', [ItemsController::class, 'index']);
+
   Route::get('/categories', [ItemsController::class, 'getCategories']);
 
-  Route::prefix('/{item:id}')->group(function () {
-    Route::get('/', [ItemsController::class, 'show']);
+  Route::get('/{item:id}', [ItemsController::class, 'show']);
+  Route::get('/{item:id}/options', [ItemOptionController::class, 'getOptions']);
+  Route::get('/{item:id}/options/{option:id}', [ItemOptionController::class, 'getOption']);
+  Route::post('/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'createIssue']);
+  Route::get('/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'getIssues']);
 
-    Route::prefix('options')->group(function () {
-      Route::get('/', [ItemOptionController::class, 'getOptions']);
-
-      Route::prefix('/{option:id}')->group(function () {
-        Route::get('/', [ItemOptionController::class, 'getOption']);
-
-        Route::prefix('issues')->group(function () {
-          Route::post('/', [ItemOptionIssueController::class, 'createIssue']);
-          Route::get('/', [ItemOptionIssueController::class, 'getIssues']);
-        });
-      });
-    });
-
-    Route::prefix('uses')->group(function () {
-      Route::get('/', [SubscriptionController::class, 'getSubscriptions']);
-      Route::post('/', [SubscriptionController::class, 'createSubscription']);
-      Route::get('{subscription:id}', [SubscriptionController::class, 'getSubscription']);
-    });
+  Route::prefix('uses')->group(function () {
+    Route::get('/', [SubscriptionController::class, 'getSubscriptions']);
+    Route::post('/', [SubscriptionController::class, 'createSubscription']);
+    Route::get('{subscription:id}', [SubscriptionController::class, 'getSubscription']);
   });
 });
 

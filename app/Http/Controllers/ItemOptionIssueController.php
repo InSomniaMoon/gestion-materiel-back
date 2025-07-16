@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\ItemOption;
 use App\Models\ItemOptionIssue;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -62,9 +63,11 @@ class ItemOptionIssueController extends Controller
 
   public function getIssues(Item $item)
   {
-    return response()->json($item->options()->with(['optionIssues' => function ($q) {
-      $q->where('status', 'open');
-    }])->get());
+    return response()->json($item->options()->with([
+      'optionIssues' => function ($q) {
+        $q->where('status', 'open');
+      },
+    ])->get());
   }
 
   public function resolveIssue(ItemOption $option, ItemOptionIssue $optionIssue)
@@ -75,23 +78,26 @@ class ItemOptionIssueController extends Controller
     return response()->json($optionIssue);
   }
 
-  public function getIssuesForItems()
+  public function getIssuesForItem(Request $request, Item $item)
   {
-    // item_ids from query params
-    $itemIds = request()->query('item_ids');
-    Log::info($itemIds);
-    if (! $itemIds) {
-      return response()->json([]);
-    }
-    // item_ids is a string of comma separated integers
-    $itemIds = explode(',', $itemIds);
+    $item->load('options.optionIssues')
+      ->whereHas('options.optionIssues', function ($query) {
+        $query->where('status', 'closed');
+      });
 
-    return response()->json(ItemOptionIssue::where('status', 'open')
-        ->where(function ($q) use ($itemIds) {
-          $q->whereIn('item_option_id', function ($q) use ($itemIds) {
-            $q->select('id')->from('item_options')->whereIn('item_id', $itemIds);
-          });
-        })
-        ->with('itemOption.item')->get());
+    $item->options()->each(function ($option) {
+      $option->optionIssues->each(function (ItemOptionIssue $issue) {
+        Log::info('Item Option Issue', [
+          'created_at' => $issue->created_at,
+          'created_at_carbon' => Carbon::parse($issue->created_at),
+        ]);
+      });
+    });
+
+    Log::info("Item Option Issues for Item: $item->id", [
+      'issues' => $item->options,
+    ]);
+
+    return response()->json($item->options);
   }
 }

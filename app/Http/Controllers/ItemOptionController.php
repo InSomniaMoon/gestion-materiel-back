@@ -23,7 +23,7 @@ class ItemOptionController extends Controller
     $validator = Validator::make($request->all(), [
       'name' => 'required|string|max:255',
       'usable' => 'boolean',
-      'description' => 'string|max:255|required',
+      'description' => 'string|max:255|nullable',
     ]);
 
     Log::info($request->all());
@@ -47,11 +47,11 @@ class ItemOptionController extends Controller
     $validator = Validator::make($request->all(), [
       'name' => 'string|max:255',
       'usable' => 'boolean',
-      'description' => 'string|max:255|required',
+      'description' => 'nullable|string|max:255',
     ]);
 
     if ($validator->fails()) {
-      return response()->json($validator->errors(), Response::HTTP_BAD_REQUEST);
+      return response()->json($validator->errors(), 400);
     }
 
     $option->update($request->all());

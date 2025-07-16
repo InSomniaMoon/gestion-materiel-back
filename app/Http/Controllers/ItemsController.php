@@ -124,7 +124,9 @@ class ItemsController extends Controller
       return response()->json(['message' => 'Unauthorized'], 401);
     }
 
-    return response()->json($item);
+    $item->load('options');
+
+    return response()->json($item, 200);
   }
 
   public function update(Request $request, Item $item)
