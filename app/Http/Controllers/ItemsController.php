@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\ItemCategory;
-use App\Models\ItemOption;
 use App\Models\ItemSubscription;
 use App\Models\UserGroup;
 use Illuminate\Http\Request;
@@ -62,10 +61,13 @@ class ItemsController extends Controller
 
   public function index(Request $request)
   {
+    $isAdmin = in_array('jwt:admin', $request->route()->middleware());
+
     // "current_page": 1,
     $size = $request->query('size', 25);
     $page = $request->query('page', 1);
     $orderBy = $request->query('order_by', 'name');
+    $orderDir = $request->query('sort_by', 'asc');
     $search = $request->query('q');
     $group_id = $request->query('group_id');
 
@@ -75,7 +77,8 @@ class ItemsController extends Controller
       'group_id' => 'required|exists:groups,id',
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:1',
-      'order_by' => 'in:name,created_at,updated_at,category_id',
+      'order_by' => 'in:name,created_at,updated_at,category_id,open_option_issues_count,state',
+      'sort_by' => 'in:asc,desc',
       'category_id' => 'nullable|exists:item_categories,id',
     ]);
 
@@ -87,8 +90,31 @@ class ItemsController extends Controller
 
     $items = Item::where('group_id', $group_id)
       ->with('category')
-      ->with('options')
-      ->orderBy($orderBy);
+      ->with('options');
+
+    if ($isAdmin) {
+      $items = $items->withCount([
+        'options as open_option_issues_count' => function ($query) {
+          $query->join('item_option_issues', 'item_options.id', '=', 'item_option_issues.item_option_id')
+            ->where('item_option_issues.status', 'open');
+        },
+      ])
+        ->addSelect([
+          DB::raw('(CASE
+            WHEN items.usable = true
+              AND (SELECT COUNT(*) FROM item_options
+                   INNER JOIN item_option_issues ON item_options.id = item_option_issues.item_option_id
+                   WHERE item_options.item_id = items.id AND item_option_issues.status = \'open\') = 0
+            THEN \'OK\'
+            WHEN items.usable = true
+              AND (SELECT COUNT(*) FROM item_options
+                   INNER JOIN item_option_issues ON item_options.id = item_option_issues.item_option_id
+                   WHERE item_options.item_id = items.id AND item_option_issues.status = \'open\') > 0
+            THEN \'NOK\'
+            ELSE \'KO\'
+          END) as state'),
+        ]);
+    }
 
     if ($category) {
       $items = $items->where('category_id', $category);
@@ -106,7 +132,7 @@ class ItemsController extends Controller
         });
     }
 
-    $items = $items->paginate($perPage = $size, $columns = ['*'], 'page', $page)
+    $items = $items->orderBy($orderBy, $orderDir)->paginate($perPage = $size, ['*'], 'page', $page)
       ->withPath('/items')
       // set the query string for the next page
       ->withQueryString();

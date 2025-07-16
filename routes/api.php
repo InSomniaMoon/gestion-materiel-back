@@ -36,7 +36,7 @@ Route::prefix('/auth')->group(function () {
 
 Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::get('users', [UserController::class, 'getPaginatedUsers']);
-
+  Route::get('items', [ItemsController::class, 'index']);
   Route::get('items/categories', [ItemCategoryController::class, 'index']);
   Route::post('items/categories', [ItemCategoryController::class, 'store']);
   Route::patch('items/categories/{category:id}', [ItemCategoryController::class, 'update']);
