@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Thiagoprz\CompositeKey\HasCompositeKey;
 
 class EventSubscription extends Model
 {
-  //
+  use HasCompositeKey;
+
+  protected $primaryKey = ['item_id', 'event_id'];
+
   protected $fillable = [
     'item_id',
     'event_id',

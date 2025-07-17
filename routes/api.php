@@ -64,7 +64,7 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
 
 Route::prefix('/items')->middleware('jwt')->group(function () {
   Route::get('/', [ItemsController::class, 'index']);
-
+  Route::get('/available', [ItemsController::class, 'getAvailableItems']);
   Route::get('/categories', [ItemsController::class, 'getCategories']);
 
   Route::get('/{item:id}', [ItemsController::class, 'show']);

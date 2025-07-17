@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
+  protected $table = 'events';
+
   protected $fillable = [
     'name',
     'start_date',
@@ -21,7 +23,7 @@ class Event extends Model
 
   public function EventSubscriptions()
   {
-    return $this->hasManyThrough(EventSubscription::class, Item::class, 'event_id', 'item_id');
+    return $this->belongsToMany(Item::class, EventSubscription::class, 'event_id', 'item_id');
   }
 
   public function organizer()

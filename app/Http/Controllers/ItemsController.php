@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EventSubscription;
 use App\Models\Item;
 use App\Models\ItemCategory;
-use App\Models\ItemSubscription;
 use App\Models\UserGroup;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
+use Log;
 use Storage;
 
 class ItemsController extends Controller
@@ -232,8 +234,8 @@ class ItemsController extends Controller
   public function destroy(Item $item)
   {
     if (
-      ItemSubscription::where('item_id', $item->id)->where('start_date', '<=', now())
-        ->where('end_date', '>=', now())->count()
+      EventSubscription::with('event')->where('item_id', $item->id)->where('event.start_date', '<=', now())
+        ->where('event.end_date', '>=', now())->orWhere('start_date', '>=', now())->count()
     ) {
       return response()->json(
         ['message' => 'Suppression impossible, il y a des événements à venir pour cet objet'],
@@ -288,5 +290,42 @@ class ItemsController extends Controller
     return response()->json([
       'path' => $path ?? null,
     ], 201);
+  }
+
+  public function getAvailableItems(Request $request)
+  {
+    Log::info(request('start_date'));
+    Log::info(request('end_date'));
+    Validator::make($request->all(), [
+      // start date is format 2025-07-17T18:00:00.000Z
+      'start_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"',
+      'end_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"|after_or_equal:start_date',
+      'page' => 'integer|min:1',
+      'size' => 'integer|min:1|max:100',
+      'q' => 'nullable|string|max:255',
+    ])->validate();
+
+    $start_date = Carbon::parse($request->start_date);
+    $end_date = Carbon::parse($request->end_date);
+
+    return Item::with([
+      'events',
+    ])
+      ->whereDoesntHave('events', function ($query) use ($start_date, $end_date) {
+        $query->where(function ($q) use ($start_date, $end_date) {
+          $q->where('start_date', '<', $end_date)
+            ->where('end_date', '>', $start_date);
+        });
+      })
+      ->where(DB::raw('lower(name)'), 'LIKE', '%'.strtolower($request->query('q', '')).'%')
+      // get only items that are usable
+      ->where('usable', true)
+
+      ->paginate(
+        $perPage = $request->query('size', 25),
+        ['*'],
+        'page',
+        $request->query('page', 1)
+      );
   }
 }
