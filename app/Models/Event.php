@@ -4,31 +4,33 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ItemSubscription extends Model
+class Event extends Model
 {
-    //
   protected $fillable = [
-    'item_id',
-    'user_id',
-    'status',
     'name',
     'start_date',
     'end_date',
+    'unit_id',
+    'user_id',
   ];
 
-  // casts
   protected $casts = [
     'start_date' => 'datetime',
     'end_date' => 'datetime',
   ];
 
-  public function item()
+  public function EventSubscriptions()
   {
-    return $this->belongsTo(Item::class);
+    return $this->hasManyThrough(EventSubscription::class, Item::class, 'event_id', 'item_id');
   }
 
-  public function user()
+  public function organizer()
   {
     return $this->belongsTo(User::class);
+  }
+
+  public function unit()
+  {
+    return $this->belongsTo(Unit::class);
   }
 }
