@@ -310,6 +310,7 @@ class ItemsController extends Controller
 
     return Item::with([
       'events',
+      'category',
     ])
       ->whereDoesntHave('events', function ($query) use ($start_date, $end_date) {
         $query->where(function ($q) use ($start_date, $end_date) {
@@ -317,7 +318,16 @@ class ItemsController extends Controller
             ->where('end_date', '>', $start_date);
         });
       })
-      ->where(DB::raw('lower(name)'), 'LIKE', '%'.strtolower($request->query('q', '')).'%')
+      ->where(function ($query) use ($request) {
+        $searchTerm = $request->query('q', '');
+        if ($searchTerm) {
+          $query->where(DB::raw('lower(name)'), 'LIKE', '%'.strtolower($searchTerm).'%')
+            ->orWhereHas('category', function ($categoryQuery) use ($searchTerm) {
+              $categoryQuery->where(DB::raw('lower(name)'), 'LIKE', '%'.strtolower($searchTerm).'%');
+            });
+        }
+      })
+
       // get only items that are usable
       ->where('usable', true)
 
