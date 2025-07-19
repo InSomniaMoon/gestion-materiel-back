@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeatureClickController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ItemCategoryController;
@@ -64,7 +65,7 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
 
 Route::prefix('/items')->middleware('jwt')->group(function () {
   Route::get('/', [ItemsController::class, 'index']);
-
+  Route::get('/available', [ItemsController::class, 'getAvailableItems']);
   Route::get('/categories', [ItemsController::class, 'getCategories']);
 
   Route::get('/{item:id}', [ItemsController::class, 'show']);
@@ -85,6 +86,14 @@ Route::prefix('/options')->middleware('jwt')->group(function () {
     Route::get('/', [ItemOptionController::class, 'getOption']);
     Route::get('/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'getComments']);
   });
+});
+
+Route::prefix('events')->middleware('jwt')->group(function () {
+  Route::get('/', [EventController::class, 'getEventsForUserForUnit']);
+  Route::post('/', [EventController::class, 'create']);
+  // Route::get('{event:id}', [EventController::class, 'show']);
+  // Route::put('{event:id}', [EventController::class, 'update']);
+  // Route::delete('{event:id}', [EventController::class, 'destroy']);
 });
 
 Route::prefix('/features')->middleware('jwt')->group(function () {

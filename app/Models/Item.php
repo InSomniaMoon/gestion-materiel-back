@@ -45,9 +45,9 @@ class Item extends Model
     return $this->hasManyThrough(ItemOptionIssue::class, ItemOption::class);
   }
 
-  public function subscriptions()
+  public function events()
   {
-    return $this->hasMany(ItemSubscription::class, 'item_id');
+    return $this->belongsToMany(Event::class, EventSubscription::class, 'event_id', 'item_id');
   }
 
   protected static function newFactory()

@@ -3,17 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Thiagoprz\CompositeKey\HasCompositeKey;
 
-class ItemSubscription extends Model
+class EventSubscription extends Model
 {
-    //
+  use HasCompositeKey;
+
+  protected $primaryKey = ['item_id', 'event_id'];
+
   protected $fillable = [
     'item_id',
-    'user_id',
-    'status',
-    'name',
-    'start_date',
-    'end_date',
+    'event_id',
   ];
 
   // casts
@@ -27,8 +27,8 @@ class ItemSubscription extends Model
     return $this->belongsTo(Item::class);
   }
 
-  public function user()
+  public function event()
   {
-    return $this->belongsTo(User::class);
+    return $this->belongsTo(Event::class);
   }
 }
