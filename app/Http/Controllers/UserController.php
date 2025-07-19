@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\UserGroup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
@@ -30,12 +31,18 @@ class UserController extends Controller
     $filter = $request->input('q', '');
 
     $users = User::
-      whereHas('userGroups', function ($query) use ($request) {
+      with('userGroups')
+      ->whereAny([
+
+        DB::raw('lower(name)'),
+        DB::raw('lower(email)'),
+      ], 'like', '%'.strtolower($filter).'%')
+      // ->where(DB::raw('lower(name)'), 'like', '%' . strtolower($filter) . '%')
+      // ->orWhere(DB::raw('lower(email)'), 'like', '%' . strtolower($filter) . '%')
+      ->whereHas('userGroups', function ($query) use ($request) {
         $query->where('id', $request->input('group_id'));
       })
-      ->where('name', 'like', "%$filter%")
-      ->orWhere('email', 'like', "%$filter%")
-      ->simplePaginate($size, ['*'], 'page', $page)
+      ->paginate($size, ['*'], 'page', $page)
       ->withPath('/users')
       ->withQueryString();
 
@@ -65,6 +72,13 @@ class UserController extends Controller
       ->withQueryString();
 
     return response()->json($users);
+  }
+
+  public function createUserWithGroup(Request $request)
+  {
+    $request->merge(['app_role' => 'user']);
+
+    return $this->createUser($request);
   }
 
   public function createUser(Request $request)
@@ -150,5 +164,19 @@ class UserController extends Controller
     }
 
     return response()->json();
+  }
+
+  public function checkUserExists(Request $request, User $user)
+  {
+    Validator::make($request->all(), [
+      'email' => 'required|email',
+    ])->validate();
+
+    $user = User::where('email', $request->input('email'))->first();
+
+    return response()->json([
+      'exists' => $user !== null,
+      'already_in_group' => $user ? $user->userGroups()->find($request->input('group_id'))->exists() : false,
+    ]);
   }
 }
