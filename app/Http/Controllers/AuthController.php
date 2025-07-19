@@ -6,10 +6,8 @@ use App\Enums\TokenType;
 use App\Models\RefreshToken;
 use App\Models\User;
 use App\Models\UserGroup;
-use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
@@ -38,7 +36,7 @@ class AuthController extends Controller
     $user_groups = UserGroup::where('user_id', $user->id);
     $admin_groups = $user_groups->where('role', 'admin')->get();
 
-    $tokens = $this->generate_tokens($user);
+    $tokens = $this->generate_tokens($user, null);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
@@ -99,8 +97,8 @@ class AuthController extends Controller
     );
 
     return $status === Password::PASSWORD_RESET
-        ? response()->json(['message' => __($status)], 200)
-        : response()->json(['message' => __($status)], 400);
+      ? response()->json(['message' => __($status)], 200)
+      : response()->json(['message' => __($status)], 400);
   }
 
   public function whoAmI(Request $request)
@@ -120,14 +118,14 @@ class AuthController extends Controller
     if (! $refresh_token) {
       return response()->json(['error' => 'Token not found'], 404);
     }
-    $refresh_token->delete();
+
     if ($refresh_token->expires_at < now()) {
       return response()->json(['error' => 'Token expired'], 401);
     }
 
     $user = User::find($refresh_token->user_id);
 
-    $tokens = $this->generate_tokens($user);
+    $tokens = $this->generate_tokens($user, $refresh_token);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
@@ -140,15 +138,16 @@ class AuthController extends Controller
     );
   }
 
-  private function generate_tokens($user)
+  private function generate_tokens($user, $existing_refresh_token)
   {
+    Log::info('Existing refresh token: ', [$existing_refresh_token]);
     $user_groups = $user->userGroups()->get();
     $admin_groups =
-        $user_groups->filter(function ($group) {
-          return $group->pivot->role === 'admin';
-        });
+      $user_groups->filter(fn ($group) => $group->pivot->role === 'admin');
     // generate a uuidV7
-    $refresh_token = uuid7();
+
+    $refresh_token = $existing_refresh_token->token ?? uuid7();
+
     $token = JWTAuth::claims([
       'role' => $user->role,
       'type' => TokenType::ACCESS,
@@ -167,11 +166,16 @@ class AuthController extends Controller
     // delete all refresh tokens that are expired
     RefreshToken::where('expires_at', '<', now())->delete();
 
-    RefreshToken::create([
-      'token' => $refresh_token,
-      'user_id' => $user->id,
-      'expires_at' => now()->addDays(7),
-    ]);
+    if ($existing_refresh_token) {
+      $existing_refresh_token->expires_at = now()->addDays(7);
+      $existing_refresh_token->save();
+    } else {
+      RefreshToken::create([
+        'token' => $refresh_token,
+        'user_id' => $user->id,
+        'expires_at' => now()->addDays(7),
+      ]);
+    }
 
     return compact('token', 'refresh_token');
   }
@@ -193,7 +197,7 @@ function uuid7()
     '%s%s-%s-%s-%s-%s%s%s',
     str_split(
       str_pad(dechex($unixts_ms), 12, '0', \STR_PAD_LEFT).
-          bin2hex($data),
+      bin2hex($data),
       4
     )
   );

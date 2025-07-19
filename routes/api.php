@@ -37,6 +37,9 @@ Route::prefix('/auth')->group(function () {
 
 Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::get('users', [UserController::class, 'getPaginatedUsers']);
+  Route::post('users', [UserController::class, 'createUserWithGroup']);
+  Route::get('users/exists', [UserController::class, 'checkUserExists']);
+
   Route::get('items', [ItemsController::class, 'index']);
   Route::get('items/categories', [ItemCategoryController::class, 'index']);
   Route::post('items/categories', [ItemCategoryController::class, 'store']);

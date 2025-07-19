@@ -134,7 +134,7 @@ class ItemsController extends Controller
         });
     }
 
-    $items = $items->orderBy($orderBy, $orderDir)->paginate($perPage = $size, ['*'], 'page', $page)
+    $items = $items->orderBy($orderBy, $orderDir)->paginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       // set the query string for the next page
       ->withQueryString();
