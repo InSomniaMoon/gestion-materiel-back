@@ -303,15 +303,22 @@ class ItemsController extends Controller
       'page' => 'integer|min:1',
       'size' => 'integer|min:1|max:100',
       'q' => 'nullable|string|max:255',
+      'category_id' => 'nullable|exists:item_categories,id',
     ])->validate();
 
     $start_date = Carbon::parse($request->start_date);
     $end_date = Carbon::parse($request->end_date);
 
-    return Item::with([
+    $items = Item::with([
       'events',
       'category',
-    ])
+    ]);
+
+    if ($request->has('category_id')) {
+      $items->where('category_id', $request->category_id);
+    }
+
+    $items = $items
       ->whereDoesntHave('events', function ($query) use ($start_date, $end_date) {
         $query->where(function ($q) use ($start_date, $end_date) {
           $q->where('start_date', '<', $end_date)
@@ -329,13 +336,13 @@ class ItemsController extends Controller
       })
 
       // get only items that are usable
-      ->where('usable', true)
+      ->where('usable', true);
 
-      ->paginate(
-        $perPage = $request->query('size', 25),
-        ['*'],
-        'page',
-        $request->query('page', 1)
-      );
+    return $items->paginate(
+      $request->query('size', 25),
+      ['*'],
+      'page',
+      $request->query('page', 1)
+    );
   }
 }

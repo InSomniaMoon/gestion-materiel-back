@@ -21,7 +21,7 @@ class Event extends Model
     'end_date' => 'datetime',
   ];
 
-  public function EventSubscriptions()
+  public function eventSubscriptions()
   {
     return $this->belongsToMany(Item::class, EventSubscription::class, 'event_id', 'item_id');
   }

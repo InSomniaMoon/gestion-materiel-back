@@ -18,14 +18,17 @@ return new class extends Migration {
       $table->dateTime('start_date');
       $table->dateTime('end_date');
       $table->string('name');
+      $table->string('comment', 500)->nullable();
       $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
       $table->foreignId('unit_id')->constrained('units')->onDelete('cascade');
+      $table->timestamps();
     });
 
     Schema::create('event_subscriptions', function (Blueprint $table) {
       $table->foreignId('item_id')->constrained('items')->onDelete('cascade');
       $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
       $table->primary(['item_id', 'event_id']);
+      $table->timestamps();
     });
   }
 
@@ -34,6 +37,10 @@ return new class extends Migration {
    */
   public function down(): void
   {
-    //
+    Schema::create('item_subscriptions', function (Blueprint $table) {
+    });
+
+    Schema::drop('event_subscriptions');
+    Schema::drop('events');
   }
 };
