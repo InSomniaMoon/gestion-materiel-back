@@ -58,4 +58,25 @@ class EventController extends Controller
 
     return response()->json($event, 201);
   }
+
+  public function getActualEvents(Request $request)
+  {
+    $events = Event::
+      with(relations: [
+        'eventSubscriptions.options',
+        'eventSubscriptions' => function ($query) {
+          $query->select('id', 'name');
+        },
+      ])
+      // with(['unit', 'eventSubscriptions', 'eventSubscriptions.options'])
+      // récupère les événements en cours où au moins une unité de laquelle l'utilisateur est membre
+      ->whereHas('unit', function ($query) use ($request) {
+        $query->where('user_id', $request->user()->id);
+      })
+      ->where('start_date', '<=', now())
+      ->where('end_date', '>=', now())
+      ->get();
+
+    return response()->json($events);
+  }
 }
