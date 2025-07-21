@@ -56,6 +56,8 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::put('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'updateOption']);
   Route::delete('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'deleteOption']);
   Route::get('items/{item:id}/options/{option:id}issues', [ItemOptionIssueController::class, 'getIssues']);
+
+  Route::get('issues/open', [ItemOptionIssueController::class, 'getPaginatedOpenedIssues']);
   Route::put('issues/{issue:id}', [ItemOptionIssueController::class, 'updateIssue']);
   Route::delete('issues/{issue:id}', [ItemOptionIssueController::class, 'deleteIssue']);
   Route::post('issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'createComment']);
@@ -94,6 +96,8 @@ Route::prefix('/options')->middleware('jwt')->group(function () {
 Route::prefix('events')->middleware('jwt')->group(function () {
   Route::get('/', [EventController::class, 'getEventsForUserForUnit']);
   Route::post('/', [EventController::class, 'create']);
+
+  Route::get('/actual', [EventController::class, 'getActualEvents']);
   // Route::get('{event:id}', [EventController::class, 'show']);
   // Route::put('{event:id}', [EventController::class, 'update']);
   // Route::delete('{event:id}', [EventController::class, 'destroy']);
