@@ -80,10 +80,7 @@ class ItemOptionIssueController extends Controller
 
   public function getIssuesForItem(Request $request, Item $item)
   {
-    $item->load('options.optionIssues')
-      ->whereHas('options.optionIssues', function ($query) {
-        $query->where('status', 'closed');
-      });
+    $item->load('options.optionIssues');
 
     $item->options()->each(function ($option) {
       $option->optionIssues->each(function (ItemOptionIssue $issue) {
@@ -99,5 +96,36 @@ class ItemOptionIssueController extends Controller
     ]);
 
     return response()->json($item->options);
+  }
+
+  public function getPaginatedOpenedIssues(Request $request)
+  {
+    $perPage = $request->input('per_page', 10);
+    $page = $request->input('page', 1);
+    $group_id = $request->input('group_id');
+
+    $issues = ItemOptionIssue::where('status', 'open')
+      ->with([
+        'itemOption:id,name,usable,item_id',
+        'itemOption.item:id,name',
+        'comments.author:id,name',
+      ])
+      ->whereHas('itemOption', function ($query) use ($group_id) {
+        $query->whereHas('item', function ($q) use ($group_id) {
+          $q->where('group_id', $group_id);
+        });
+      })
+      ->select([
+        'id',
+        'status',
+        'value',
+        'item_option_id',
+        'created_at',
+      ])
+      ->orderBy('created_at', 'desc')
+      ->groupBy(['id'])
+      ->paginate($perPage, ['*'], 'page', $page);
+
+    return response()->json($issues);
   }
 }

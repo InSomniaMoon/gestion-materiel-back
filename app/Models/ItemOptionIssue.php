@@ -19,13 +19,13 @@ class ItemOptionIssue extends Model
 
   protected $casts = [
     'date_resolution' => 'date',
-
+    'created_at' => 'datetime',
   ];
 
-  // rename created_at to date_declaration
-  public function getCreatedAtAttribute($value)
+  // créer un attribut date_declaration qui retourne created_at
+  public function getDateDeclarationAttribute()
   {
-    return $this->date_declaration;
+    return $this->created_at;
   }
 
   public function comments()
