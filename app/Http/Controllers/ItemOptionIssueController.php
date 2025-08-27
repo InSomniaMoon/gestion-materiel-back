@@ -38,12 +38,12 @@ class ItemOptionIssueController extends Controller
     return response()->json($issue, 201);
   }
 
-  public function getComments(ItemOption $option, ItemOptionIssue $optionIssue)
+  public function getComments(Item $item, ItemOption $option, ItemOptionIssue $optionIssue)
   {
     return response()->json($optionIssue->comments()->with('author:id,name')->get());
   }
 
-  public function createComment(Request $request, ItemOption $option, ItemOptionIssue $optionIssue)
+  public function createComment(Request $request, Item $item, ItemOption $option, ItemOptionIssue $optionIssue)
   {
     $validator = Validator::make($request->all(), [
       'comment' => 'required',
@@ -52,6 +52,12 @@ class ItemOptionIssueController extends Controller
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
+    Log::info('Creating comment', [
+      'item_id' => $item->id,
+      'option_id' => $option->id,
+      'issue_id' => $optionIssue->id,
+      'user_id' => Auth::user()->id,
+    ]);
 
     $comment = $optionIssue->comments()->create([
       'comment' => $request->comment,
