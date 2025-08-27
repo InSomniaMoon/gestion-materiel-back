@@ -55,12 +55,14 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::get('items/{item:id}/options/issues', [ItemOptionIssueController::class, 'getIssuesForItem']);
   Route::put('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'updateOption']);
   Route::delete('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'deleteOption']);
-  Route::get('items/{item:id}/options/{option:id}issues', [ItemOptionIssueController::class, 'getIssues']);
+  Route::get('items/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'getIssues']);
+  Route::get('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'getComments']);
+  Route::post('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'createComment']);
 
-  Route::get('issues/open', [ItemOptionIssueController::class, 'getPaginatedOpenedIssues']);
+  Route::get('issues/open', action: [ItemOptionIssueController::class, 'getPaginatedOpenedIssues']);
   Route::put('issues/{issue:id}', [ItemOptionIssueController::class, 'updateIssue']);
   Route::delete('issues/{issue:id}', [ItemOptionIssueController::class, 'deleteIssue']);
-  Route::post('issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'createComment']);
+
   Route::patch('issues/{optionIssue:id}/resolve', [ItemOptionIssueController::class, 'resolveIssue']);
 
   Route::get('units', [UnitsController::class, 'getUnits']);
