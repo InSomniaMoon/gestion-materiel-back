@@ -84,18 +84,9 @@ class ItemOptionIssueController extends Controller
     return response()->json($optionIssue);
   }
 
-  public function getIssuesForItem(Request $request, Item $item)
+  public function getOptionsWithIssues(Request $request, Item $item)
   {
     $item->load('options.optionIssues');
-
-    $item->options()->each(function ($option) {
-      $option->optionIssues->each(function (ItemOptionIssue $issue) {
-        Log::info('Item Option Issue', [
-          'created_at' => $issue->created_at,
-          'created_at_carbon' => Carbon::parse($issue->created_at),
-        ]);
-      });
-    });
 
     Log::info("Item Option Issues for Item: $item->id", [
       'issues' => $item->options,

@@ -114,4 +114,25 @@ class GroupController extends Controller
       'path' => $path ?? null,
     ], 201);
   }
+
+  public function addUserToGroup(Request $request)
+  {
+    $request->validate([
+      'email' => 'required|exists:users,email',
+      'group_id' => 'required|exists:groups,id',
+      'role' => 'required|string|in:admin,user',
+    ]);
+
+    $group = Group::find($request->group_id);
+    $user = \App\Models\User::where('email', $request->email)->first();
+
+    // Check if user is already in group
+    if ($user->userGroups()->where('group_id', $group->id)->exists()) {
+      return response()->json(['message' => 'User already in group'], 400);
+    }
+
+    $user->userGroups()->attach($group->id);
+
+    return response()->json(['message' => 'User added to group successfully']);
+  }
 }

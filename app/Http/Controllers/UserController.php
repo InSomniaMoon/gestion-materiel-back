@@ -176,7 +176,7 @@ class UserController extends Controller
 
     return response()->json([
       'exists' => $user !== null,
-      'already_in_group' => $user ? $user->userGroups()->find($request->input('group_id'))->exists() : false,
+      'already_in_group' => $user?->userGroups()->where('id', $request->input('group_id'))->exists() ?? false,
     ]);
   }
 }

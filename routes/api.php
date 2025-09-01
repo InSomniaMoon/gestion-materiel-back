@@ -25,60 +25,53 @@ Route::get(
   }
 )->where('path', '.*');
 Route::prefix('/auth')->group(function () {
-  Route::post('login', [AuthController::class, 'login']);
-  Route::post('register', [AuthController::class, 'register']);
-  Route::post('whoami', [AuthController::class, 'whoAmI']);
-  Route::post('reset-password', [AuthController::class, 'resetPassword']);
-
-  Route::middleware('jwt')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout']);
-  });
+  Route::post('login', [AuthController::class, 'login']); //
+  Route::post('register', [AuthController::class, 'register']); //
+  Route::post('whoami', [AuthController::class, 'whoAmI']); //
+  Route::post('reset-password', [AuthController::class, 'resetPassword']); //
 });
 
 Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
-  Route::get('users', [UserController::class, 'getPaginatedUsers']);
-  Route::post('users', [UserController::class, 'createUserWithGroup']);
-  Route::get('users/exists', [UserController::class, 'checkUserExists']);
+  Route::get('users', [UserController::class, 'getPaginatedUsers']); //
+  Route::post('users', [UserController::class, 'createUserWithGroup']); //
+  Route::get('users/exists', [UserController::class, 'checkUserExists']); //
 
-  Route::get('items', [ItemsController::class, 'index']);
-  Route::get('items/categories', [ItemCategoryController::class, 'index']);
-  Route::post('items/categories', [ItemCategoryController::class, 'store']);
-  Route::patch('items/categories/{category:id}', [ItemCategoryController::class, 'update']);
-  Route::delete('items/categories/{category:id}', [ItemCategoryController::class, 'destroy']);
+  Route::get('items', [ItemsController::class, 'index']); //
+  Route::get('items/categories', [ItemCategoryController::class, 'index']); //
+  Route::post('items/categories', [ItemCategoryController::class, 'store']); //
+  Route::patch('items/categories/{category:id}', [ItemCategoryController::class, 'update']); //
+  Route::delete('items/categories/{category:id}', [ItemCategoryController::class, 'destroy']); //
 
-  Route::post('items', [ItemsController::class, 'createItem']);
-  Route::post('items/images', [ItemsController::class, 'uploadFile']);
-  Route::delete('items/{item:id}', [ItemsController::class, 'destroy']);
-  Route::put('items/{item:id}', [ItemsController::class, 'update']);
+  Route::post('items', [ItemsController::class, 'createItem']); //
+  Route::post('items/images', [ItemsController::class, 'uploadFile']); //
+  Route::delete('items/{item:id}', [ItemsController::class, 'destroy']); //
+  Route::put('items/{item:id}', [ItemsController::class, 'update']); //
 
-  Route::post('items/{item:id}/options', [ItemOptionController::class, 'createOption']);
-  Route::get('items/{item:id}/options/issues', [ItemOptionIssueController::class, 'getIssuesForItem']);
-  Route::put('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'updateOption']);
-  Route::delete('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'deleteOption']);
-  Route::get('items/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'getIssues']);
-  Route::get('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'getComments']);
-  Route::post('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'createComment']);
+  Route::post('items/{item:id}/options', [ItemOptionController::class, 'createOption']); //
+  Route::get('items/{item:id}/options', [ItemOptionIssueController::class, 'getOptionsWithIssues']); //
+  Route::put('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'updateOption']); //
+  Route::delete('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'deleteOption']); //
+  Route::get('items/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'getIssues']); //
+  Route::get('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'getComments']); //
+  Route::post('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'createComment']); //
 
-  Route::get('issues/open', action: [ItemOptionIssueController::class, 'getPaginatedOpenedIssues']);
-  Route::put('issues/{issue:id}', [ItemOptionIssueController::class, 'updateIssue']);
-  Route::delete('issues/{issue:id}', [ItemOptionIssueController::class, 'deleteIssue']);
+  Route::get('issues/open', action: [ItemOptionIssueController::class, 'getPaginatedOpenedIssues']); //
 
-  Route::patch('issues/{optionIssue:id}/resolve', [ItemOptionIssueController::class, 'resolveIssue']);
+  Route::get('units', [UnitsController::class, 'getUnits']); //
+  Route::post('units', [UnitsController::class, 'createUnit']); //
+  Route::patch('units/{unit:id}', [UnitsController::class, 'updateUnit']); //
 
-  Route::get('units', [UnitsController::class, 'getUnits']);
-  Route::post('units', [UnitsController::class, 'createUnit']);
-  Route::patch('units/{unit:id}', [UnitsController::class, 'updateUnit']);
+  Route::post('groups/users', [GroupController::class, 'addUserToGroup']);
 });
 
 Route::prefix('/items')->middleware('jwt')->group(function () {
-  Route::get('/', [ItemsController::class, 'index']);
-  Route::get('/available', [ItemsController::class, 'getAvailableItems']);
-  Route::get('/categories', [ItemsController::class, 'getCategories']);
+  Route::get('/', [ItemsController::class, 'index']); // Get all items
+  Route::get('/available', [ItemsController::class, 'getAvailableItems']); // Get available items
+  Route::get('/categories', [ItemsController::class, 'getCategories']); //
 
-  Route::get('/{item:id}', [ItemsController::class, 'show']);
-  Route::get('/{item:id}/options', [ItemOptionController::class, 'getOptions']);
-  Route::get('/{item:id}/options/{option:id}', [ItemOptionController::class, 'getOption']);
-  Route::post('/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'createIssue']);
+  Route::get('/{item:id}', [ItemsController::class, 'show']); //
+  Route::get('/{item:id}/options', [ItemOptionController::class, 'getOptions']); //
+  Route::post('/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'createIssue']); //
   Route::get('/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'getIssues']);
 
   Route::prefix('uses')->group(function () {
@@ -96,18 +89,15 @@ Route::prefix('/options')->middleware('jwt')->group(function () {
 });
 
 Route::prefix('events')->middleware('jwt')->group(function () {
-  Route::get('/', [EventController::class, 'getEventsForUserForUnit']);
-  Route::post('/', [EventController::class, 'create']);
+  Route::get('/', [EventController::class, 'getEventsForUserForUnit']); //
+  Route::post('/', [EventController::class, 'create']); //
 
-  Route::get('/actual', [EventController::class, 'getActualEvents']);
-  // Route::get('{event:id}', [EventController::class, 'show']);
-  // Route::put('{event:id}', [EventController::class, 'update']);
-  // Route::delete('{event:id}', [EventController::class, 'destroy']);
-});
+  Route::get('/actual', [EventController::class, 'getActualEvents']); //
+}); //
 
 Route::prefix('/features')->middleware('jwt')->group(function () {
-  Route::post('/{feature:slug}/click', [FeatureClickController::class, 'click']);
-});
+  Route::post('/{feature:slug}/click', [FeatureClickController::class, 'click']); //
+}); //
 
 Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
   Route::get('/users', [UserController::class, 'getBackofficePaginatedUsers']);
