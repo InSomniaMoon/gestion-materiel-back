@@ -47,7 +47,9 @@ class Item extends Model
 
   public function events()
   {
-    return $this->belongsToMany(Event::class, EventSubscription::class, 'event_id', 'item_id');
+    // Many-to-many with events via pivot table 'event_subscriptions'
+    return $this->belongsToMany(Event::class, 'event_subscriptions', 'item_id', 'event_id')
+      ->withTimestamps();
   }
 
   protected static function newFactory()

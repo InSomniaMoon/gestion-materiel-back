@@ -4,13 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Illuminate\Http\Request;
-use Log;
-use Mockery\Matcher\MatcherInterface;
 use Validator;
 
 class EventController extends Controller
 {
-  //
   public function getEventsForUserForUnit(Request $request)
   {
     Validator::make($request->all(), [
@@ -50,11 +47,14 @@ class EventController extends Controller
 
     $event = Event::create($request->only('unit_id', 'name', 'start_date', 'end_date') + ['user_id' => $request->user()->id]);
 
-    // Attach materials to the event
-    foreach ($request->input('materials', []) as $material) {
-      if (isset($material['id'])) {
-        $event->eventSubscriptions()->attach($material['id']);
-      }
+    // Attach materials to the event (array of item IDs)
+    $itemIds = collect($request->input('materials', []))
+      ->map(fn ($m) => is_array($m) ? ($m['id'] ?? null) : $m)
+      ->filter()
+      ->values()
+      ->all();
+    if (! empty($itemIds)) {
+      $event->eventSubscriptions()->sync($itemIds);
     }
 
     return response()->json($event, 201);
@@ -110,6 +110,34 @@ class EventController extends Controller
     $event->delete();
 
     return response()->json(null, 204);
+  }
+
+  public function update(Request $request, Event $event)
+  {
+    $request->validate([
+      'unit_id' => 'required|integer|exists:units,id',
+      'name' => 'required|string|max:255',
+      'start_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"',
+      'end_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"|after_or_equal:start_date',
+      'materials' => 'array',
+      'materials.*.id' => 'integer|exists:items,id',
+      'comment' => 'nullable|string|max:500',
+    ]);
+
+    $event->start_date = $request->input('start_date');
+    $event->end_date = $request->input('end_date');
+    $event->comment = $request->input('comment');
+
+    // Sync materials as item IDs
+    $itemIds = collect($request->input('materials', []))
+      ->map(fn ($m) => is_array($m) ? ($m['id'] ?? null) : $m)
+      ->filter()
+      ->values()
+      ->all();
+    $event->eventSubscriptions()->sync($itemIds);
+    $event->save();
+
+    return response()->json($event);
   }
 
   private function has_user_access_toEvent(Request $request, Event $event)

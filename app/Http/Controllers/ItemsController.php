@@ -304,10 +304,12 @@ class ItemsController extends Controller
       'size' => 'integer|min:1|max:100',
       'q' => 'nullable|string|max:255',
       'category_id' => 'nullable|exists:item_categories,id',
+      'for_event' => 'nullable|exists:events,id',
     ])->validate();
 
     $start_date = Carbon::parse($request->start_date);
     $end_date = Carbon::parse($request->end_date);
+    $forEventId = $request->query('for_event');
 
     $items = Item::with([
       'events',
@@ -319,11 +321,15 @@ class ItemsController extends Controller
     }
 
     $items = $items
-      ->whereDoesntHave('events', function ($query) use ($start_date, $end_date) {
+      ->whereDoesntHave('events', function ($query) use ($start_date, $end_date, $forEventId) {
+        // Exclude items that have an overlapping event other than the one specified in for_event
         $query->where(function ($q) use ($start_date, $end_date) {
           $q->where('start_date', '<', $end_date)
             ->where('end_date', '>', $start_date);
         });
+        if ($forEventId) {
+          $query->where('events.id', '!=', $forEventId);
+        }
       })
       ->where(function ($query) use ($request) {
         $searchTerm = $request->query('q', '');
@@ -334,7 +340,6 @@ class ItemsController extends Controller
             });
         }
       })
-
       // get only items that are usable
       ->where('usable', true);
 

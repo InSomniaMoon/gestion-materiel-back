@@ -14,6 +14,7 @@ class Event extends Model
     'end_date',
     'unit_id',
     'user_id',
+    'comment',
   ];
 
   protected $casts = [
@@ -23,7 +24,9 @@ class Event extends Model
 
   public function eventSubscriptions()
   {
-    return $this->belongsToMany(Item::class, EventSubscription::class, 'event_id', 'item_id');
+    // Many-to-many with items via pivot table 'event_subscriptions'
+    return $this->belongsToMany(Item::class, 'event_subscriptions', 'event_id', 'item_id')
+      ->withTimestamps();
   }
 
   public function organizer()
