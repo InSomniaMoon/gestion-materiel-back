@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Log;
 use Mockery\Matcher\MatcherInterface;
 use Validator;
 
@@ -78,5 +79,30 @@ class EventController extends Controller
       ->get();
 
     return response()->json($events);
+  }
+
+  public function getEventById(Request $request, Event $event)
+  {
+    $user = $request->user();
+    // le user fait partie de l'unité mais n'est pas forcément le créateur. ou le user est un admin dans le groupe de l'unité
+    Log::info($event->unit()->get());
+    $unit = $event->unit()->first();
+    $is_group_admin = $user->userGroups()->where('id', $unit->group_id)->where('role', 'admin')->exists();
+    if (! $user->units()->where('id', $event->unit_id)->exists() && ! $is_group_admin) {
+      return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    $event
+      ->load([
+        'unit',
+        'eventSubscriptions' => function ($query) {
+          $query
+            ->with(['options', 'category'])
+            ->orderBy('name')
+            ->orderBy('category_id');
+        },
+      ]);
+
+    return response()->json($event);
   }
 }

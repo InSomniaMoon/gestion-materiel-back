@@ -21,7 +21,8 @@ class JwtMiddleware
     try {
       JWTAuth::parseToken()->authenticate();
       // get claim type
-      $claims = JWTAuth::getPayload()->get('type');
+      $payload = JWTAuth::parseToken()->getPayload();
+      $claims = $payload->get('type');
 
       if ($claims != TokenType::ACCESS->value) {
         throw new JWTException('token not access');
@@ -31,6 +32,12 @@ class JwtMiddleware
       Log::error('Token not valid', ['error' => $e->getMessage()]);
 
       return response()->json(['error' => 'Token not valid'], 401);
+    }
+
+    $groups = $payload->get('user_groups');
+    $group_id = $request->query('group_id');
+    if (! in_array($group_id, $groups)) {
+      return response()->json(['error' => 'Unauthorized'], 403);
     }
 
     return $next($request);
