@@ -83,12 +83,7 @@ class EventController extends Controller
 
   public function getEventById(Request $request, Event $event)
   {
-    $user = $request->user();
-    // le user fait partie de l'unité mais n'est pas forcément le créateur. ou le user est un admin dans le groupe de l'unité
-    Log::info($event->unit()->get());
-    $unit = $event->unit()->first();
-    $is_group_admin = $user->userGroups()->where('id', $unit->group_id)->where('role', 'admin')->exists();
-    if (! $user->units()->where('id', $event->unit_id)->exists() && ! $is_group_admin) {
+    if (! $this->has_user_access_toEvent($request, $event)) {
       return response()->json(['error' => 'Unauthorized'], 403);
     }
 
@@ -104,5 +99,26 @@ class EventController extends Controller
       ]);
 
     return response()->json($event);
+  }
+
+  public function delete(Request $request, Event $event)
+  {
+    if (! $this->has_user_access_toEvent($request, $event)) {
+      return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    $event->delete();
+
+    return response()->json(null, 204);
+  }
+
+  private function has_user_access_toEvent(Request $request, Event $event)
+  {
+    $user = $request->user();
+    // le user fait partie de l'unité mais n'est pas forcément le créateur. ou le user est un admin dans le groupe de l'unité
+    $unit = $event->unit()->first();
+    $is_group_admin = $user->userGroups()->where('id', $unit->group_id)->where('role', 'admin')->exists();
+
+    return $user->units()->where('id', $event->unit_id)->exists() || $is_group_admin;
   }
 }
