@@ -1,1 +1,21 @@
-npx lint-staged --config .lint-staged.config.js
+#!/bin/sh
+set -e
+
+# Ensure Homebrew paths are available (macOS GUI apps often miss them)
+if [ -x "/opt/homebrew/bin/brew" ]; then
+	eval "$('/opt/homebrew/bin/brew' shellenv)"
+elif [ -x "/usr/local/bin/brew" ]; then
+	eval "$('/usr/local/bin/brew' shellenv)"
+fi
+
+# Run PHP CS Fixer on staged PHP files
+FILES=$(git diff --cached --name-only -z --diff-filter=ACMR -- '*.php' || true)
+
+if [ -n "$FILES" ]; then
+	# Fix only the staged files (NUL-delimited for safety)
+	printf "%s" "$FILES" | xargs -0 php ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes --
+	# Re-add potentially reformatted files to the index
+	printf "%s" "$FILES" | xargs -0 git add --
+fi
+
+exit 0
