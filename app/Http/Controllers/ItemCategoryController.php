@@ -56,6 +56,7 @@ class ItemCategoryController extends Controller
   {
     $validator = Validator::make($request->all(), [
       'name' => 'required|string|max:255',
+      'identified' => 'required|boolean',
     ]);
 
     if ($validator->fails()) {
@@ -65,6 +66,7 @@ class ItemCategoryController extends Controller
     $category = ItemCategory::create([
       'name' => $request->name,
       'group_id' => $request->query('group_id'),
+      'identified' => $request->input('identified'),
     ]);
 
     return response()->json($category, 201);
@@ -74,6 +76,7 @@ class ItemCategoryController extends Controller
   {
     $validator = Validator::make($request->all(), [
       'name' => 'required|string|max:255',
+      'identified' => 'required|boolean',
     ]);
 
     if ($validator->fails()) {
@@ -82,6 +85,8 @@ class ItemCategoryController extends Controller
 
     $category->update([
       'name' => $request->name,
+      'identified' => $request->identified,
+
     ]);
 
     return response()->json($category, 200);

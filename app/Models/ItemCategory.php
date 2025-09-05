@@ -11,6 +11,7 @@ class ItemCategory extends Model
   protected $fillable = [
     'name',
     'group_id',
+    'identified',
   ];
 
   public $timestamps = false;
