@@ -8,14 +8,13 @@ elif [ -x "/usr/local/bin/brew" ]; then
 	eval "$('/usr/local/bin/brew' shellenv)"
 fi
 
-# Run PHP CS Fixer on staged PHP files
-FILES=$(git diff --cached --name-only -z --diff-filter=ACMR -- '*.php' || true)
-
-if [ -n "$FILES" ]; then
-	# Fix only the staged files (NUL-delimited for safety)
-	printf "%s" "$FILES" | xargs -0 php ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes --
-	# Re-add potentially reformatted files to the index
-	printf "%s" "$FILES" | xargs -0 git add --
-fi
+# Run PHP CS Fixer on staged PHP files (process NUL-delimited list safely)
+git diff --cached --name-only -z --diff-filter=ACMR -- '*.php' |
+while IFS= read -r -d '' file; do
+	# Fix the file
+	php ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes -- "$file"
+	# Re-add potentially reformatted file to the index
+	git add -- "$file"
+done
 
 exit 0

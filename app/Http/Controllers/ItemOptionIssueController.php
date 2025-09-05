@@ -76,9 +76,17 @@ class ItemOptionIssueController extends Controller
     ])->get());
   }
 
-  public function resolveIssue(ItemOption $option, ItemOptionIssue $optionIssue)
+  public function resolveIssue(Request $request, Item $item, ItemOption $option, ItemOptionIssue $optionIssue)
   {
+    if (
+      $item->id !== $option->item_id ||
+      $option->id !== $optionIssue->item_option_id ||
+      $item->group_id !== (int) $request->input('group_id')
+    ) {
+      return response()->json(['error' => 'Forbidden'], status: 403);
+    }
     $optionIssue->status = 'resolved';
+    $optionIssue->date_resolution = Carbon::now();
     $optionIssue->save();
 
     return response()->json($optionIssue);
@@ -86,7 +94,11 @@ class ItemOptionIssueController extends Controller
 
   public function getOptionsWithIssues(Request $request, Item $item)
   {
-    $item->load('options.optionIssues');
+    $item->load([
+      'options.optionIssues' => function ($q) {
+        $q->where('status', 'open');
+      },
+    ]);
 
     Log::info("Item Option Issues for Item: $item->id", [
       'issues' => $item->options,

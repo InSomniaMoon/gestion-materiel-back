@@ -124,6 +124,7 @@ class EventController extends Controller
       'comment' => 'nullable|string|max:500',
     ]);
 
+    $event->name = $request->input('name');
     $event->start_date = $request->input('start_date');
     $event->end_date = $request->input('end_date');
     $event->comment = $request->input('comment');
