@@ -53,6 +53,7 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::get('items/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'getIssues']);
   Route::get('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'getComments']);
   Route::post('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'createComment']);
+  Route::patch('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/resolve', [ItemOptionIssueController::class, 'resolveIssue']);
 
   Route::get('issues/open', action: [ItemOptionIssueController::class, 'getPaginatedOpenedIssues']);
 
