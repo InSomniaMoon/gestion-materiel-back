@@ -34,7 +34,7 @@ class GroupController extends Controller
 
     $groups = Group::where('name', 'ilike', "%$filter%")
       ->orWhere('description', 'ilike', "%$filter%")
-      ->simplePaginate($size, ['*'], 'page', $page)
+      ->paginate($size, ['*'], 'page', $page)
       ->withQueryString();
 
     return response()->json($groups);

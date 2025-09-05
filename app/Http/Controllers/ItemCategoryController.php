@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ItemCategory;
 use Illuminate\Http\Request;
+use Log;
 use Validator;
 
 class ItemCategoryController extends Controller
@@ -11,7 +12,7 @@ class ItemCategoryController extends Controller
   public function index(Request $request)
   {
     $size = $request->query('size', 25);
-    $page = $request->query('page', 0);
+    $page = $request->query('page', 1);
     $orderBy = $request->query('order_by', 'name');
     $search = $request->query('q');
     $group_id = $request->query('group_id');
@@ -23,14 +24,13 @@ class ItemCategoryController extends Controller
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:0',
       'order_by' => 'in:name,created_at,updated_at',
-
     ]);
 
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
 
-    // Get all items paginated with their itemOptions
+    Log::info('request for getPaginatedCategories', $request->all());
 
     $items = ItemCategory::where('group_id', $group_id)
 
@@ -44,7 +44,7 @@ class ItemCategoryController extends Controller
         });
     }
 
-    $items = $items->paginate($perPage = $size, $columns = ['*'], 'page', $page)
+    $items = $items->paginate($size, ['*'], 'page', $page)
       ->withPath('/categories')
       // set the query string for the next page
       ->withQueryString();
