@@ -14,6 +14,8 @@ class UnitsController extends Controller
     $units = Unit::where('group_id', request()->query('group_id'))
       ->with(['responsible:id,name'])
       ->with('chiefs:id,name')
+      // TODO: checker
+      ->orderBy('name')
       ->get();
 
     return response()->json($units);
