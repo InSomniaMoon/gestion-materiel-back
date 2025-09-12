@@ -258,7 +258,7 @@ class ItemsController extends Controller
     )
       ->distinct('name')
       ->orderBy('name')
-      ->get(['id', 'name']);
+      ->get(['id', 'name', 'identified']);
 
     return response()->json($categories);
   }
@@ -325,7 +325,8 @@ class ItemsController extends Controller
         // Exclude items that have an overlapping event other than the one specified in for_event
         $query->where(function ($q) use ($start_date, $end_date) {
           $q->where('start_date', '<', $end_date)
-            ->where('end_date', '>', $start_date);
+            ->where('end_date', '>', $start_date)
+            ->where('category.identified', 'false');
         });
         if ($forEventId) {
           $query->where('events.id', '!=', $forEventId);
@@ -341,7 +342,7 @@ class ItemsController extends Controller
         }
       })
       // get only items that are usable
-      ->where('usable', true);
+      ->where('usable', true)->select('items.*', );
 
     return $items->paginate(
       $request->query('size', 25),
