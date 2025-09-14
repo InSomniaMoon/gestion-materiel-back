@@ -325,8 +325,7 @@ class ItemsController extends Controller
         // Exclude items that have an overlapping event other than the one specified in for_event
         $query->where(function ($q) use ($start_date, $end_date) {
           $q->where('start_date', '<', $end_date)
-            ->where('end_date', '>', $start_date)
-            ->where('category.identified', 'false');
+            ->where('end_date', '>', $start_date);
         });
         if ($forEventId) {
           $query->where('events.id', '!=', $forEventId);
