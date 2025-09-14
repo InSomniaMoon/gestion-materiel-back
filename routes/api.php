@@ -89,7 +89,7 @@ Route::prefix('/options')->middleware('jwt')->group(function () {
 });
 
 Route::prefix('events')->middleware('jwt')->group(function () {
-  Route::get('/', [EventController::class, 'getEventsForUserForUnit']);
+  Route::get('/', [EventController::class, 'getEventsForUserForGroup']);
   Route::post('/', [EventController::class, 'create']);
   Route::delete('/{event:id}', [EventController::class, 'delete']);
   Route::patch('/{event:id}', [EventController::class, 'update']);

@@ -18,6 +18,9 @@ class JwtMiddleware
    */
   public function handle(Request $request, \Closure $next): Response
   {
+    if ($request->query('group_id') === null) {
+      return response()->json(['error' => 'group_id query parameter is required'], 422);
+    }
     try {
       JWTAuth::parseToken()->authenticate();
       // get claim type
