@@ -8,22 +8,18 @@ use Validator;
 
 class EventController extends Controller
 {
-  public function getEventsForUserForUnit(Request $request)
+  public function getEventsForUserForGroup(Request $request)
   {
-    Validator::make($request->all(), [
-      'unit_id' => 'required|integer|exists:units,id',
-    ])->validate();
+    $group_id = $request->input('group_id');
 
-    // on récupère tous les événements futurs ou en cours pour l'utilisateur connecté dans l'unité spécifiée
-    $user = $request->user();
-    $unitId = $request->input('unit_id');
-    if (! $user->units()->where('id', $unitId)->exists()) {
-      return response()->json(['error' => 'Unauthorized'], 403);
-    }
-
-    $events = Event::where('unit_id', $unitId)
-      ->where(function ($query) {
-        $query->where('start_date', '>=', now())
+    $events = Event::
+      with(['unit:id,color'])
+      ->where(function ($query) use ($group_id) {
+        $query
+          ->whereHas('unit', function ($q) use ($group_id) {
+            $q->where('group_id', $group_id);
+          })
+          ->where('start_date', '>=', now())
           ->orWhere('end_date', '>=', now());
       })
       ->get();

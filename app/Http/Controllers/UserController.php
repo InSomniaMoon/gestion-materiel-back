@@ -67,7 +67,7 @@ class UserController extends Controller
 
     $users = User::where('name', 'like', "%$filter%")
       ->orWhere('email', 'like', "%$filter%")
-      ->simplePaginate($size, ['*'], 'page', $page)
+      ->paginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       ->withQueryString();
 
