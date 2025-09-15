@@ -31,14 +31,16 @@ class UserController extends Controller
     $filter = $request->input('q', '');
 
     $users = User::
-      with('userGroups')
+      with([
+        'userGroups' => function ($query) use ($request) {
+          $query->where('id', $request->input('group_id'));
+        },
+      ])
       ->whereAny([
-
         DB::raw('lower(name)'),
         DB::raw('lower(email)'),
       ], 'like', '%'.strtolower($filter).'%')
-      // ->where(DB::raw('lower(name)'), 'like', '%' . strtolower($filter) . '%')
-      // ->orWhere(DB::raw('lower(email)'), 'like', '%' . strtolower($filter) . '%')
+
       ->whereHas('userGroups', function ($query) use ($request) {
         $query->where('id', $request->input('group_id'));
       })
