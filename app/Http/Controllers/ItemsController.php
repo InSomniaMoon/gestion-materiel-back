@@ -321,44 +321,107 @@ class ItemsController extends Controller
     $start_date = Carbon::parse($request->start_date);
     $end_date = Carbon::parse($request->end_date);
     $forEventId = $request->query('for_event');
+    // 1. Quantité utilisée pour chaque item non identifié
+    $usedQuantities = EventSubscription::query()
+      ->leftJoin('events as e', 'e.id', '=', 'event_subscriptions.event_id')
+      ->leftJoin('items as i', 'i.id', '=', 'event_subscriptions.item_id')
+      ->leftJoin('item_categories as c', 'c.id', '=', 'i.category_id')
+      ->where('c.identified', false)
+      ->groupBy('i.id')
+      ->select('i.id', 'i.name', DB::raw('SUM(event_subscriptions.quantity) as used_quantity'));
 
-    $items = Item::with([
-      'events',
-      'category',
-    ]);
-
-    if ($request->has('category_id')) {
-      $items->where('category_id', $request->category_id);
+    if ($forEventId) {
+      $usedQuantities->where('e.id', '!=', $forEventId);
     }
 
-    $items = $items
-      ->whereDoesntHave('events', function ($query) use ($start_date, $end_date, $forEventId) {
-        // Exclude items that have an overlapping event other than the one specified in for_event
-        $query->where(function ($q) use ($start_date, $end_date) {
-          $q->where('start_date', '<', $end_date)
-            ->where('end_date', '>', $start_date);
-        });
-        if ($forEventId) {
-          $query->where('events.id', '!=', $forEventId);
-        }
+    // 2. Sélection des items disponibles
+    $items = Item::query()
+      ->leftJoin('item_categories as categorie', 'categorie.id', '=', 'items.category_id')
+      ->leftJoin('event_subscriptions as es', 'es.item_id', '=', 'items.id')
+      ->leftJoin('events as event', 'event.id', '=', 'es.event_id')
+      ->leftJoinSub($usedQuantities, 'oqu', function ($join) {
+        $join->on('oqu.id', '=', 'items.id');
       })
-      ->where(function ($query) use ($request) {
-        $searchTerm = $request->query('q', '');
-        if ($searchTerm) {
-          $query->where(DB::raw('lower(name)'), 'LIKE', '%'.strtolower($searchTerm).'%')
-            ->orWhereHas('category', function ($categoryQuery) use ($searchTerm) {
-              $categoryQuery->where(DB::raw('lower(name)'), 'LIKE', '%'.strtolower($searchTerm).'%');
-            });
-        }
-      })
-      // get only items that are usable
-      ->where('usable', true)->select('items.*', );
+      ->where('items.group_id', $request->query('group_id'))
+      ->where(function ($query) use ($start_date, $end_date) {
+        $query->where(function ($sub) use ($start_date, $end_date) {
+          $sub->whereRaw('not exists (
+                    select 1 from events
+                    inner join event_subscriptions on events.id = event_subscriptions.event_id
+                    where items.id = event_subscriptions.item_id
+                    and (start_date < ? and end_date > ?)
+                )', [$start_date, $end_date])
+            ->where('categorie.identified', true);
+        })
+          ->orWhere('categorie.identified', false);
+      });
+    if ($forEventId) {
+      $items->orWhere('event.id', '!=', $forEventId);
+    }
+    $items
+      ->whereRaw('items.stock - COALESCE(oqu.used_quantity, 0) > 0')
+      ->select(
+        'categorie.*',
+        'items.*',
+        DB::raw('items.stock - COALESCE(oqu.used_quantity, 0) as rest')
+      )
+      ->orderBy('categorie.name')
+      ->orderBy('items.name')
+      ->distinct();
 
-    return $items->paginate(
-      $request->query('size', 25),
-      ['*'],
-      'page',
-      $request->query('page', 1)
-    );
+    if ($request->has('category_id')) {
+      $items->where('items.category_id', $request->category_id);
+    }
+
+    return $items
+      ->with(['category:identified,id,name'])
+      ->paginate(
+        $request->query('size', 25),
+        ['*'],
+        'page',
+        $request->query('page', 1)
+      );
+    // $items = Item::with([
+    //   'events',
+    //   'category',
+    // ]);
+
+    // if ($request->has('category_id')) {
+    //   $items->where('category_id', $request->category_id);
+    // }
+
+    // $items = $items
+    //   ->with(['category:identified,id'])
+    //   ->orWhereHas('category', function ($query) {
+    //     $query->where('identified', true);
+    //   })->whereDoesntHave('events', function ($query) use ($start_date, $end_date, $forEventId) {
+    //     // Exclude items that have an overlapping event other than the one specified in for_event
+    //     $query->where(function ($q) use ($start_date, $end_date) {
+    //       $q->where('start_date', '<', $end_date)
+    //         ->where('end_date', '>', $start_date);
+    //     });
+    //     // if item.category.identified is false, we take it anyway and stock is real stock minus sum of event quantities
+    //     if ($forEventId) {
+    //       $query->where('events.id', '!=', $forEventId);
+    //     }
+    //   })
+    //   ->where(function ($query) use ($request) {
+    //     $searchTerm = $request->query('q', '');
+    //     if ($searchTerm) {
+    //       $query->where(DB::raw('lower(name)'), 'LIKE', '%' . strtolower($searchTerm) . '%')
+    //         ->orWhereHas('category', function ($categoryQuery) use ($searchTerm) {
+    //           $categoryQuery->where(DB::raw('lower(name)'), 'LIKE', '%' . strtolower($searchTerm) . '%');
+    //         });
+    //     }
+    //   })
+    //   // get only items that are usable
+    //   ->where('usable', true)->select('items.*', );
+
+    // return $items->paginate(
+    //   $request->query('size', 25),
+    //   ['*'],
+    //   'page',
+    //   $request->query('page', 1)
+    // );
   }
 }
