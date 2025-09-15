@@ -135,10 +135,15 @@ class EventController extends Controller
 
     // Sync materials as item IDs
     $itemIds = collect($request->input('materials', []))
-      ->map(fn ($m) => is_array($m) ? ($m['id'] ?? null) : $m)
+      ->map(function ($m) {
+        if (is_array($m) && isset($m['id'])) {
+          return [$m['id'] => ['quantity' => $m['quantity'] ?? 1]];
+        }
+
+        return null;
+      })
       ->filter()
-      ->values()
-      ->all();
+      ->reduce(fn ($carry, $item) => $carry + $item, []);
     $event->eventSubscriptions()->sync($itemIds);
     $event->save();
 
