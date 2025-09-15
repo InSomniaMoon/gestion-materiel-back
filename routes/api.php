@@ -30,6 +30,8 @@ Route::prefix('/auth')->group(function () {
   Route::post('reset-password', [AuthController::class, 'resetPassword']);
 });
 
+Route::post('users/send-reset-password', [UserController::class, 'sendResetPassword']);
+
 Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::get('users', [UserController::class, 'getPaginatedUsers']);
   Route::post('users', [UserController::class, 'createUserWithGroup']);
