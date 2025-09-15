@@ -20,6 +20,8 @@ class UserController extends Controller
       'page' => 'integer|min:1',
       'size' => 'integer|min:1',
       'q' => 'string',
+      'order_by' => 'string|in:name,email,role|nullable',
+      'sort_by' => 'string|in:asc,desc|nullable',
     ]);
 
     if ($validator->fails()) {
@@ -29,6 +31,8 @@ class UserController extends Controller
     $page = $request->input('page', 1);
     $size = $request->input('size', 25);
     $filter = $request->input('q', '');
+    $sortBy = $request->input('order_by', 'name');
+    $orderBy = $request->input('sort_by', 'asc');
 
     $users = User::
       with([
@@ -44,7 +48,8 @@ class UserController extends Controller
       ->whereHas('userGroups', function ($query) use ($request) {
         $query->where('id', $request->input('group_id'));
       })
-      ->paginate($size, ['*'], 'page', $page)
+      ->orderBy($sortBy, $orderBy)
+      ->simplePaginate($size, ['*'], 'page', $page)
       ->withPath('/users')
       ->withQueryString();
 
