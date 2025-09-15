@@ -7,12 +7,14 @@ use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\UserGroup;
 use Carbon\Carbon;
+use Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
 use Log;
 use Storage;
+use Symfony\Component\HttpKernel\Attribute\WithHttpStatus;
 
 class ItemsController extends Controller
 {
@@ -233,16 +235,25 @@ class ItemsController extends Controller
 
   public function destroy(Item $item)
   {
-    if (
-      EventSubscription::with('event')->where('item_id', $item->id)->where('event.start_date', '<=', now())
-        ->where('event.end_date', '>=', now())->orWhere('start_date', '>=', now())->count()
-    ) {
+    $coming_events = EventSubscription::with([
+      'event' => function ($query) {
+        $query->where('id', '!=', null)->select('id', 'start_date', 'end_date');
+        $query->where('end_date', '>=', now())->orWhere('start_date', '>=', now());
+        $query->select('id', 'start_date', 'end_date', 'name');
+      },
+
+    ])
+      ->where('item_id', $item->id)
+      ->get();
+    if ($coming_events->count() > 0) {
       return response()->json(
-        ['message' => 'Suppression impossible, il y a des événements à venir pour cet objet'],
+        [
+          'message' => 'Suppression impossible, il y a des événements à venir pour cet objet',
+          'events' => $coming_events,
+        ],
         429
       );
     }
-
     $item->delete();
 
     return response()->json(null, 204);
