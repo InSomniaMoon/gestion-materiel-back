@@ -179,4 +179,23 @@ class UserController extends Controller
       'already_in_group' => $user?->userGroups()->where('id', $request->input('group_id'))->exists() ?? false,
     ]);
   }
+
+  public function sendResetPassword(Request $request)
+  {
+    $validator = Validator::make($request->all(), [
+      'email' => 'required|email',
+    ]);
+
+    if ($validator->fails()) {
+      return response()->json($validator->errors(), 400);
+    }
+
+    $status = Password::sendResetLink(
+      $request->only('email')
+    );
+
+    return $status === Password::RESET_LINK_SENT
+      ? response()->json(['message' => __($status)], 200)
+      : response()->json(['message' => __($status)], 400);
+  }
 }
