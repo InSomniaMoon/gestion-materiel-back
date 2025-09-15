@@ -44,13 +44,20 @@ class EventController extends Controller
     $event = Event::create($request->only('unit_id', 'name', 'start_date', 'end_date') + ['user_id' => $request->user()->id]);
 
     // Attach materials to the event (array of item IDs)
-    $itemIds = collect($request->input('materials', []))
-      ->map(fn ($m) => is_array($m) ? ($m['id'] ?? null) : $m)
+    $itemIdsAndQuantities = collect($request->input('materials', []))
+      ->map(function ($m) {
+        if (is_array($m) && isset($m['id'])) {
+          return [$m['id'] => ['quantity' => $m['quantity'] ?? 1]];
+        }
+
+        return null;
+      })
       ->filter()
-      ->values()
-      ->all();
-    if (! empty($itemIds)) {
-      $event->eventSubscriptions()->sync($itemIds);
+      ->reduce(function ($carry, $item) {
+        return $carry + $item;
+      }, []);
+    if (! empty($itemIdsAndQuantities)) {
+      $event->eventSubscriptions()->sync($itemIdsAndQuantities);
     }
 
     return response()->json($event, 201);
@@ -88,6 +95,7 @@ class EventController extends Controller
         'unit',
         'eventSubscriptions' => function ($query) {
           $query
+            ->select('items.id', 'items.name', 'items.category_id', 'quantity')
             ->with(['options', 'category'])
             ->orderBy('name')
             ->orderBy('category_id');
@@ -127,10 +135,15 @@ class EventController extends Controller
 
     // Sync materials as item IDs
     $itemIds = collect($request->input('materials', []))
-      ->map(fn ($m) => is_array($m) ? ($m['id'] ?? null) : $m)
+      ->map(function ($m) {
+        if (is_array($m) && isset($m['id'])) {
+          return [$m['id'] => ['quantity' => $m['quantity'] ?? 1]];
+        }
+
+        return null;
+      })
       ->filter()
-      ->values()
-      ->all();
+      ->reduce(fn ($carry, $item) => $carry + $item, []);
     $event->eventSubscriptions()->sync($itemIds);
     $event->save();
 

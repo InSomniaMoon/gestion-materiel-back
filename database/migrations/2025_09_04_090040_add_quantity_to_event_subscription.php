@@ -1,0 +1,40 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+  /**
+   * Run the migrations.
+   */
+  public function up(): void
+  {
+    Schema::table('event_subscriptions', function (Blueprint $table) {
+      $table->integer('quantity')->default(1);
+    });
+
+    Schema::table('items', function (Blueprint $table) {
+      $table->integer('stock')->default(1);
+    });
+    Schema::table('item_categories', function (Blueprint $table) {
+      $table->boolean('identified')->default(true);
+    });
+  }
+
+  /**
+   * Reverse the migrations.
+   */
+  public function down(): void
+  {
+    Schema::table('event_subscriptions', function (Blueprint $table) {
+      $table->dropColumn('quantity');
+    });
+    Schema::table('items', function (Blueprint $table) {
+      $table->dropColumn('stock');
+    });
+    Schema::table('item_categories', function (Blueprint $table) {
+      $table->dropColumn('identified');
+    });
+  }
+};
