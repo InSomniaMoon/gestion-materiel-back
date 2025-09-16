@@ -6,6 +6,7 @@ use App\Enums\TokenType;
 use App\Models\RefreshToken;
 use App\Models\User;
 use App\Models\UserGroup;
+use App\Models\UserStructure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -33,19 +34,14 @@ class AuthController extends Controller
     // Get the authenticated user.
     $user = Auth::user();
 
-    $user_groups = UserGroup::where('user_id', $user->id);
-    $admin_groups = $user_groups->where('role', 'admin')->get();
-
     $tokens = $this->generate_tokens($user, null);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
-    $groups = $user->userGroups()->get();
-
-    $units = $user->units()->get();
+    $structures = $user->userStructures()->get();
 
     return response()->json(
-      compact('user', 'groups', 'units', 'token', 'refresh_token')
+      compact('user', 'structures', 'token', 'refresh_token')
     );
   }
 
@@ -125,27 +121,26 @@ class AuthController extends Controller
       return response()->json(['error' => 'Token expired'], 401);
     }
 
-    $user = User::find($refresh_token->user_id);
+    $user = $refresh_token->user()->first();
 
     $tokens = $this->generate_tokens($user, $refresh_token);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
-    $groups = $user->userGroups()->get();
-
-    $units = $user->units()->get();
+    $structures = $user->userStructures()->get();
 
     return response()->json(
-      compact('user', 'groups', 'units', 'token', 'refresh_token')
+      compact('user', 'structures', 'token', 'refresh_token')
     );
   }
 
-  private function generate_tokens($user, $existing_refresh_token)
+  private function generate_tokens(User $user, $existing_refresh_token)
   {
     Log::info('Existing refresh token: ', [$existing_refresh_token]);
-    $user_groups = $user->userGroups()->get();
-    $admin_groups =
-      $user_groups->filter(fn ($group) => $group->pivot->role === 'admin');
+    $user_structures = $user->userStructures()->get();
+    Log::info('User structures query: ', [$user_structures]);
+    $admin_structures =
+      $user_structures->filter(fn ($group) => $group->pivot->role === 'admin');
     // generate a uuidV7
 
     $refresh_token = $existing_refresh_token->token ?? uuid7();
@@ -153,13 +148,8 @@ class AuthController extends Controller
     $token = JWTAuth::claims([
       'role' => $user->role,
       'type' => TokenType::ACCESS,
-      //   'user_groups' => UserGroup::where('user_id', $user->id)->get(),
-      'user_groups' => $user_groups->map(function ($group) {
-        return $group->id;
-      }),
-      'admin_groups' => $admin_groups->map(function ($group) {
-        return $group->id;
-      }),
+      'user_structures' => $user_structures->map(fn ($group) => $group->id),
+      'admin_structures' => $admin_structures->map(fn ($group) => $group->id),
     ])->fromUser($user);
 
     //save refresh token

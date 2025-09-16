@@ -59,7 +59,8 @@ class User extends Authenticatable implements JWTSubject
 
   public function userStructures()
   {
-    return $this->belongsToMany(Structure::class, UserStructure::class, 'user_id', 'structure_id')
+    // Replace 'user_structures' with your actual pivot table name if different (e.g. 'structure_user')
+    return $this->belongsToMany(Structure::class, 'user_structures', 'user_id', 'structure_id')
       ->using(UserStructure::class)
       ->withPivot('role');
   }

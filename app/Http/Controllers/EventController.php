@@ -154,9 +154,10 @@ class EventController extends Controller
   {
     $user = $request->user();
     // le user fait partie de l'unité mais n'est pas forcément le créateur. ou le user est un admin dans le groupe de l'unité
-    $unit = $event->unit()->first();
-    $is_group_admin = $user->userGroups()->where('id', $unit->group_id)->where('role', 'admin')->exists();
+    $structure = $event->structure()->first();
+    //TODO
+    $is_group_admin = $user->userStructures()->where('id', $structure->id)->where('role', 'admin')->exists();
 
-    return $user->units()->where('id', $event->unit_id)->exists() || $is_group_admin;
+    return $user->userStructures()->where('id', $event->structure_id)->exists() || $is_group_admin;
   }
 }
