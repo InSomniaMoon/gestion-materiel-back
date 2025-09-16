@@ -57,10 +57,10 @@ class User extends Authenticatable implements JWTSubject
     ];
   }
 
-  public function userGroups()
+  public function userStructures()
   {
-    return $this->belongsToMany(Group::class, UserGroup::class, 'user_id', 'group_id')
-      ->using(UserGroup::class)
+    return $this->belongsToMany(Structure::class, UserStructure::class, 'user_id', 'structure_id')
+      ->using(UserStructure::class)
       ->withPivot('role');
   }
 
@@ -72,10 +72,5 @@ class User extends Authenticatable implements JWTSubject
   public function getJWTCustomClaims()
   {
     return [];
-  }
-
-  public function units()
-  {
-    return $this->belongsToMany(Unit::class, 'unit_users', 'user_id', 'unit_id');
   }
 }
