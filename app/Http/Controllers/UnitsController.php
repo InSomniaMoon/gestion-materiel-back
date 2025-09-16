@@ -12,8 +12,8 @@ class UnitsController extends Controller
   public function getUnits()
   {
     $units = Unit::where('group_id', request()->query('group_id'))
-      ->with(['responsible:id,name'])
-      ->with('chiefs:id,name')
+      ->with(['responsible:id,firstname,lastname'])
+      ->with('chiefs:id,firstname,lastname')
       // TODO: checker
       ->orderBy('name')
       ->get();

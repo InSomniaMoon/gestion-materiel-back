@@ -20,7 +20,7 @@ class UserController extends Controller
       'page' => 'integer|min:1',
       'size' => 'integer|min:1',
       'q' => 'string',
-      'order_by' => 'string|in:name,email,role|nullable',
+      'order_by' => 'string|in:firstname,lastname,email,role|nullable',
       'sort_by' => 'string|in:asc,desc|nullable',
     ]);
 
@@ -31,7 +31,7 @@ class UserController extends Controller
     $page = $request->input('page', 1);
     $size = $request->input('size', 25);
     $filter = $request->input('q', '');
-    $sortBy = $request->input('order_by', 'name');
+    $sortBy = $request->input('order_by', 'lastname');
     $orderBy = $request->input('sort_by', 'asc');
 
     $users = User::
@@ -41,7 +41,8 @@ class UserController extends Controller
         },
       ])
       ->whereAny([
-        DB::raw('lower(name)'),
+        DB::raw('lower(firstname)'),
+        DB::raw('lower(lastname)'),
         DB::raw('lower(email)'),
       ], 'like', '%'.strtolower($filter).'%')
 
@@ -72,8 +73,12 @@ class UserController extends Controller
     $size = $request->input('size', 25);
     $filter = $request->input('q', '');
 
-    $users = User::where('name', 'like', "%$filter%")
-      ->orWhere('email', 'like', "%$filter%")
+    $users = User::
+      whereAny([
+        DB::raw('lower(firstname)'),
+        DB::raw('lower(lastname)'),
+        DB::raw('lower(email)'),
+      ], 'like', '%'.strtolower($filter).'%')
       ->paginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       ->withQueryString();
@@ -91,7 +96,8 @@ class UserController extends Controller
   public function createUser(Request $request)
   {
     $validator = Validator::make($request->all(), [
-      'name' => 'required|string',
+      'firstname' => 'required|string',
+      'lastname' => 'required|string',
       'email' => 'required|email',
       'role' => 'required|string',
       'group_id' => 'integer|required',
@@ -106,7 +112,8 @@ class UserController extends Controller
     $password = Hash::make(Str::random(25));
 
     $user = User::create([
-      'name' => $request->input('name'),
+      'firstname' => $request->input('firstname'),
+      'lastname' => $request->input('lastname'),
       'email' => $request->input('email'),
       'password' => $password,
       'role' => $request->input('app_role'),

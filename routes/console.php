@@ -27,7 +27,9 @@ Artisan::command('create:admin', function () {
   $this->info('Creating admin user');
   // ask for  'name', 'email', 'password', 'role', 'phone',
 
-  $name = $this->ask('Enter name', 'Pierre Leroyer');
+  $firstname = $this->ask('Enter firstname', 'Pierre');
+  $lastname = $this->ask('Enter lastname', 'Leroyer');
+
   $email = $this->ask('Enter email', 'pierre.leroyer69@gmail.com');
   do {
     $password = $this->secret('Enter password');
@@ -45,7 +47,8 @@ Artisan::command('create:admin', function () {
   $group = array_search($group, $groups);
 
   $user = new App\Models\User();
-  $user->name = $name;
+  $user->firstname = $firstname;
+  $user->lastname = $lastname;
   $user->email = $email;
   $user->password = Illuminate\Support\Facades\Hash::make($password);
   $user->role = 'user';
