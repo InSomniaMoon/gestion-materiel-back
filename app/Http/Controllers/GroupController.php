@@ -4,12 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Group;
 use Illuminate\Http\Request;
-use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
-use Log;
 use Storage;
-use Str;
 
 class GroupController extends Controller
 {

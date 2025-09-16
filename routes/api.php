@@ -10,7 +10,6 @@ use App\Http\Controllers\ItemOptionIssueController;
 use App\Http\Controllers\ItemsController;
 use App\Http\Controllers\StructureController;
 use App\Http\Controllers\SubscriptionController;
-use App\Http\Controllers\UnitsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -64,7 +63,7 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::post('structures', [StructureController::class, 'store']);
   Route::patch('structures/{unit:id}', [StructureController::class, 'update']);
 
-  Route::post('groups/users', [GroupController::class, 'addUserToGroup']);
+  Route::post('structures/users', [StructureController::class, 'addUserToStructure']);
 });
 
 Route::prefix('/items')->middleware('jwt')->group(function () {

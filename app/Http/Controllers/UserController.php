@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Structure;
 use App\Models\User;
-use App\Models\UserGroup;
 use App\Models\UserStructure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,11 +35,11 @@ class UserController extends Controller
     $sortBy = $request->input('order_by', 'lastname');
     $orderBy = $request->input('sort_by', 'asc');
 
+    $structure = Structure::find($request->input('structure_id', 'code_structure'));
+
     $users = User::
       with([
-        'userStructures' => function ($query) use ($request) {
-          $query->where('id', $request->input('structure_id'));
-        },
+        'userStructures:id,name,color,code_structure',
       ])
       ->whereAny([
         DB::raw('lower(firstname)'),
@@ -47,8 +47,17 @@ class UserController extends Controller
         DB::raw('lower(email)'),
       ], 'like', '%'.strtolower($filter).'%')
 
-      ->whereHas('userStructures', function ($query) use ($request) {
-        $query->where('id', $request->input('structure_id'));
+      ->whereHas('userStructures', function ($query) use ($request, $structure) {
+        switch ($structure->type) {
+          case Structure::GROUPE:
+            $code_base = substr($structure->code, 0, 2);
+            $query->where('code_structure', 'like', "$code_base%");
+
+            break;
+          default:
+            $query->where('id', $request->input('structure_id'));
+            break;
+        }
       })
       ->orderBy($sortBy, $orderBy)
       ->simplePaginate($size, ['*'], 'page', $page)
