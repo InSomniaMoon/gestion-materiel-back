@@ -15,12 +15,12 @@ class ItemCategoryController extends Controller
     $page = $request->query('page', 1);
     $orderBy = $request->query('order_by', 'name');
     $search = $request->query('q');
-    $group_id = $request->query('group_id');
+    $structure_id = $request->query('structure_id');
 
-    $category = $request->query('category_id');
+    $category_id = $request->query('category_id');
 
     $validator = Validator::make($request->all(), [
-      'group_id' => 'required|exists:groups,id',
+      'structure_id' => 'required|exists:structures,id',
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:0',
       'order_by' => 'in:name,created_at,updated_at',
@@ -32,7 +32,7 @@ class ItemCategoryController extends Controller
 
     Log::info('request for getPaginatedCategories', $request->all());
 
-    $items = ItemCategory::where('group_id', $group_id)
+    $items = ItemCategory::where('structure_id', $structure_id)
 
       ->orderBy($orderBy);
 
@@ -65,7 +65,7 @@ class ItemCategoryController extends Controller
 
     $category = ItemCategory::create([
       'name' => $request->name,
-      'group_id' => $request->query('group_id'),
+      'structure_id' => $request->query('structure_id'),
       'identified' => $request->input('identified'),
     ]);
 

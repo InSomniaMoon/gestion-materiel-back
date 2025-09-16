@@ -21,16 +21,16 @@ class JwtAdminMiddleware
       JWTAuth::parseToken()->authenticate();
       // get role claim from token
       $payload = JWTAuth::parseToken()->getPayload();
-      $groups = $payload->get('admin_groups');
+      $structures = $payload->get('admin_structures');
 
-      $group_id = $request->query('group_id');
-      if (! in_array($group_id, $groups)) {
+      $structures_id = $request->query('structure_id');
+      if (! in_array($structures_id, haystack: $structures)) {
         throw new JWTException('not admin');
       }
     } catch (JWTException $e) {
-      Log::warning('Token not valid', ['error' => $e->getMessage()]);
+      Log::warning('Token non valide', ['error' => $e->getMessage()]);
 
-      return response()->json(['error' => 'Token not valid'], 401);
+      return response()->json(['error' => 'Token non valide'], 401);
     }
 
     return $next($request);

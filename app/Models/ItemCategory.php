@@ -10,7 +10,7 @@ class ItemCategory extends Model
 
   protected $fillable = [
     'name',
-    'group_id',
+    'structure_id',
     'identified',
   ];
 

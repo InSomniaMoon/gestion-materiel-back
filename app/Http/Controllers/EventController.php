@@ -8,16 +8,16 @@ use Validator;
 
 class EventController extends Controller
 {
-  public function getEventsForUserForGroup(Request $request)
+  public function getEventsForUserForStructure(Request $request)
   {
-    $group_id = $request->input('group_id');
+    $structure_id = $request->input('structure_id');
 
     $events = Event::
-      with(['unit:id,color'])
-      ->where(function ($query) use ($group_id) {
+      with(['structure:id,color'])
+      ->where(function ($query) use ($structure_id) {
         $query
-          ->whereHas('unit', function ($q) use ($group_id) {
-            $q->where('group_id', $group_id);
+          ->whereHas('structure', function ($q) use ($structure_id) {
+            $q->where('structure_id', $structure_id);
           })
           ->where('start_date', '>=', now())
           ->orWhere('end_date', '>=', now());
@@ -53,9 +53,10 @@ class EventController extends Controller
         return null;
       })
       ->filter()
-      ->reduce(function ($carry, $item) {
-        return $carry + $item;
-      }, []);
+      ->reduce(
+        fn ($carry, $item) => $carry + $item,
+        []
+      );
     if (! empty($itemIdsAndQuantities)) {
       $event->eventSubscriptions()->sync($itemIdsAndQuantities);
     }
@@ -74,7 +75,7 @@ class EventController extends Controller
       ])
       // with(['unit', 'eventSubscriptions', 'eventSubscriptions.options'])
       // récupère les événements en cours où au moins une unité de laquelle l'utilisateur est membre
-      ->whereHas('unit', function ($query) use ($request) {
+      ->whereHas('structure', function ($query) use ($request) {
         $query->where('user_id', $request->user()->id);
       })
       ->where('start_date', '<=', now())

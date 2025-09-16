@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Structure extends Model
 {
+  public const NATIONAL = 'NATIONAL';
+
+  public const TERRITOIRE = 'TERRITOIRE';
+
+  public const GROUPE = 'GROUPE';
+
+  public const UNITE = 'UNITE';
+
   protected $table = 'structures';
 
   protected $fillable = [
@@ -17,8 +25,10 @@ class Structure extends Model
 
   public $timestamps = false;
 
-  public function userStructures()
+  public function members()
   {
-    return $this->hasMany(UserStructure::class, 'structure_id');
+    return $this->belongsToMany(User::class, 'user_structures', 'structure_id', 'user_id')
+      ->using(UserStructure::class)
+      ->withPivot('role');
   }
 }

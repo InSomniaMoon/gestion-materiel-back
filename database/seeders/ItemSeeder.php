@@ -18,7 +18,7 @@ class ItemSeeder extends Seeder
       'description' => 'Salle 10 places',
       'category' => 'salle',
       'usable' => true,
-      'group_id' => 1,
+      'structure_id' => 1,
     ]);
 
     ItemOption::create([
@@ -47,7 +47,7 @@ class ItemSeeder extends Seeder
       'description' => 'Tente 4 places',
       'category' => 'tente',
       'usable' => true,
-      'group_id' => 1,
+      'structure_id' => 1,
 
     ]);
     Item::create([
@@ -55,7 +55,7 @@ class ItemSeeder extends Seeder
       'description' => 'Tente 2 places',
       'category' => 'tente',
       'usable' => true,
-      'group_id' => 1,
+      'structure_id' => 1,
     ]);
 
     $item = Item::create([
@@ -63,7 +63,7 @@ class ItemSeeder extends Seeder
       'description' => 'Tente 6 places',
       'category' => 'tente',
       'usable' => true,
-      'group_id' => 1,
+      'structure_id' => 1,
     ]);
 
     ItemOption::create([
@@ -92,7 +92,7 @@ class ItemSeeder extends Seeder
       'description' => 'Tente 8 places',
       'category' => 'tente',
       'usable' => true,
-      'group_id' => 1,
+      'structure_id' => 1,
     ]);
 
     ItemOption::create([
@@ -131,7 +131,7 @@ class ItemSeeder extends Seeder
       'description' => 'Tente 10 places',
       'category' => 'tente',
       'usable' => true,
-      'group_id' => 1,
+      'structure_id' => 1,
     ]);
   }
 

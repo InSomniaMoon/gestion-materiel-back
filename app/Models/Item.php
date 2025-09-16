@@ -25,7 +25,7 @@ class Item extends Model
     'category',
     'usable',
     'date_of_buy',
-    'group_id',
+    'structure_id',
     'category_id',
     'image',
   ];

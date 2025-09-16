@@ -6,15 +6,14 @@ use App\Models\EventSubscription;
 use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\UserGroup;
+use App\Models\UserStructure;
 use Carbon\Carbon;
-use Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
 use Log;
 use Storage;
-use Symfony\Component\HttpKernel\Attribute\WithHttpStatus;
 
 class ItemsController extends Controller
 {
@@ -22,15 +21,15 @@ class ItemsController extends Controller
   {
     $validator = Validator::make($request->all(), Item::$validation);
 
-    $group_id = $request->query('group_id');
+    $structure_id = $request->query('structure_id');
 
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
 
     if (
-      ! UserGroup::where('user_id', $request->user()->id)
-        ->where('group_id', $group_id)
+      ! UserStructure::where('user_id', $request->user()->id)
+        ->where('structure_id', $structure_id)
         ->firstOrFail()
     ) {
       return response()->json(['message' => 'Unauthorized'], 401);
@@ -40,7 +39,7 @@ class ItemsController extends Controller
       'name' => $request->name,
       'description' => $request->description,
       'category_id' => $request->category_id,
-      'group_id' => $group_id,
+      'structure_id' => $structure_id,
       'image' => $request->image,
     ]);
     $item->save();
@@ -73,12 +72,12 @@ class ItemsController extends Controller
     $orderBy = $request->query('order_by', 'name');
     $orderDir = $request->query('sort_by', 'asc');
     $search = $request->query('q');
-    $group_id = $request->query('group_id');
+    $structure_id = $request->query('structure_id');
 
     $category = $request->query('category_id');
 
     $validator = Validator::make($request->all(), [
-      'group_id' => 'required|exists:groups,id',
+      'structure_id' => 'required|exists:structures,id',
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:1',
       'order_by' => 'in:name,created_at,updated_at,category_id,open_option_issues_count,state',
@@ -92,7 +91,7 @@ class ItemsController extends Controller
 
     // Get all items paginated with their itemOptions
 
-    $items = Item::where('group_id', $group_id)
+    $items = Item::where('structure_id', $structure_id)
       ->with('category')
       ->with('options');
 
@@ -147,8 +146,8 @@ class ItemsController extends Controller
   public function show(Request $request, Item $item)
   {
     if (
-      ! UserGroup::where('user_id', $request->user()->id)
-        ->where('group_id', $item->group_id)
+      ! UserStructure::where('user_id', $request->user()->id)
+        ->where('structure_id', $item->structure_id)
         ->firstOrFail()
     ) {
       return response()->json(['message' => 'Unauthorized'], 401);
@@ -261,17 +260,16 @@ class ItemsController extends Controller
 
   public function getCategories()
   {
-    $group_id = request()->query('group_id');
-    // get distinct name of the categories of items for the group
-    $categories = ItemCategory::where(
-      'group_id',
-      $group_id
+    $structure = request()->query('structure_id');
+
+    // get distinct name of the categories of items for the structure
+    return ItemCategory::where(
+      'structure_id',
+      $structure
     )
       ->distinct('name')
       ->orderBy('name')
-      ->get(['id', 'name', 'identified']);
-
-    return response()->json($categories);
+      ->select(['id', 'name', 'identified'])->get();
   }
 
   public function uploadFile(Request $request)
@@ -342,7 +340,7 @@ class ItemsController extends Controller
       ->leftJoinSub($usedQuantities, 'oqu', function ($join) {
         $join->on('oqu.id', '=', 'items.id');
       })
-      ->where('items.group_id', $request->query('group_id'))
+      ->where('items.structure_id', $request->query('structure_id'))
       ->where(function ($query) use ($start_date, $end_date) {
         $query->where(function ($sub) use ($start_date, $end_date) {
           $sub->whereRaw('not exists (

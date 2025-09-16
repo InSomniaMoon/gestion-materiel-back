@@ -12,11 +12,11 @@ return new class extends Migration {
   {
     Schema::rename('groups', 'structures');
     Schema::table('structures', function (Blueprint $table) {
-      $table->bigInteger('code_structure')->unique();
+      $table->string('code_structure')->unique();
       $table->string('nom_structure')->nullable();
       $table->string('color')->default('#ffffff');
       $table->string('type')->default('group');
-      $table->bigInteger('parent_code')->nullable();
+      $table->string('parent_code')->nullable();
     });
     Schema::table('structures', function (Blueprint $table) {
       $table->foreign('parent_code')->references('code_structure')->on('structures')->onDelete('set null');
@@ -39,6 +39,12 @@ return new class extends Migration {
     Schema::table('events', function (Blueprint $table) {
       $table->dropForeign(['unit_id']);
       $table->renameColumn('unit_id', 'structure_id');
+      $table->foreign('structure_id')->references('id')->on('structures')->onDelete('cascade');
+    });
+
+    Schema::table('items', function (Blueprint $table) {
+      $table->dropForeign(['group_id']);
+      $table->renameColumn('group_id', 'structure_id');
       $table->foreign('structure_id')->references('id')->on('structures')->onDelete('cascade');
     });
     Schema::drop('user_group');

@@ -119,20 +119,20 @@ class GroupController extends Controller
   {
     $request->validate([
       'email' => 'required|exists:users,email',
-      'group_id' => 'required|exists:groups,id',
+      'structure_id' => 'required|exists:structures,id',
       'role' => 'required|string|in:admin,user',
     ]);
 
-    $group = Group::find($request->group_id);
+    $group = Group::find($request->structure_id);
     $user = \App\Models\User::where('email', $request->email)->first();
 
     // Check if user is already in group
-    if ($user->userGroups()->where('group_id', $group->id)->exists()) {
+    if ($user->userStructures()->where('structure_id', $group->id)->exists()) {
       return response()->json(['message' => 'User already in group'], 400);
     }
 
-    $user->userGroups()->attach($group->id);
+    $user->userStructures()->attach($group->id);
 
-    return response()->json(['message' => 'User added to group successfully']);
+    return response()->json(['message' => 'User added to structure successfully']);
   }
 }

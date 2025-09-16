@@ -18,8 +18,8 @@ class JwtMiddleware
    */
   public function handle(Request $request, \Closure $next): Response
   {
-    if ($request->query('group_id') === null) {
-      return response()->json(['error' => 'group_id query parameter is required'], 422);
+    if ($request->query('structure_id') === null) {
+      return response()->json(['error' => 'le paramètre structure_id est requis'], 422);
     }
     try {
       JWTAuth::parseToken()->authenticate();
@@ -32,15 +32,15 @@ class JwtMiddleware
       }
       // token
     } catch (JWTException $e) {
-      Log::error('Token not valid', ['error' => $e->getMessage()]);
+      Log::error('Token non valide', ['error' => $e->getMessage()]);
 
-      return response()->json(['error' => 'Token not valid'], 401);
+      return response()->json(['error' => 'Token non valide'], 401);
     }
 
-    $groups = $payload->get('user_groups');
-    $group_id = $request->query('group_id');
-    if (! in_array($group_id, $groups)) {
-      return response()->json(['error' => 'Unauthorized'], 403);
+    $structures = $payload->get('user_structures');
+    $structure_id = $request->query('structure_id');
+    if (! in_array($structure_id, $structures)) {
+      return response()->json(['error' => 'Non autorisé'], 403);
     }
 
     return $next($request);

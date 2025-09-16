@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\TokenType;
 use App\Models\RefreshToken;
 use App\Models\User;
-use App\Models\UserGroup;
-use App\Models\UserStructure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;

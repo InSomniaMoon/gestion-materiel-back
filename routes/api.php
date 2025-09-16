@@ -8,6 +8,7 @@ use App\Http\Controllers\ItemCategoryController;
 use App\Http\Controllers\ItemOptionController;
 use App\Http\Controllers\ItemOptionIssueController;
 use App\Http\Controllers\ItemsController;
+use App\Http\Controllers\StructureController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UnitsController;
 use App\Http\Controllers\UserController;
@@ -59,9 +60,9 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
 
   Route::get('issues/open', action: [ItemOptionIssueController::class, 'getPaginatedOpenedIssues']);
 
-  Route::get('units', [UnitsController::class, 'getUnits']);
-  Route::post('units', [UnitsController::class, 'createUnit']);
-  Route::patch('units/{unit:id}', [UnitsController::class, 'updateUnit']);
+  Route::get('structures', [StructureController::class, 'getStructuresWithMembers']);
+  Route::post('structures', [StructureController::class, 'store']);
+  Route::patch('structures/{unit:id}', [StructureController::class, 'update']);
 
   Route::post('groups/users', [GroupController::class, 'addUserToGroup']);
 });
@@ -91,7 +92,7 @@ Route::prefix('/options')->middleware('jwt')->group(function () {
 });
 
 Route::prefix('events')->middleware('jwt')->group(function () {
-  Route::get('/', [EventController::class, 'getEventsForUserForGroup']);
+  Route::get('/', [EventController::class, 'getEventsForUserForStructure']);
   Route::post('/', [EventController::class, 'create']);
   Route::delete('/{event:id}', [EventController::class, 'delete']);
   Route::patch('/{event:id}', [EventController::class, 'update']);
@@ -108,7 +109,7 @@ Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
   Route::get('/users', [UserController::class, 'getBackofficePaginatedUsers']);
   Route::post('/users', [UserController::class, 'createUser']);
   Route::get('/users/{user:id}/groups', [UserController::class, 'getUserGroups']);
-  Route::put('/users/{user:id}/groups', [UserController::class, 'updateUserGroups']);
+  Route::put('/users/{user:id}/groups', [UserController::class, 'updateUserStructures']);
 
   Route::get('/groups', [GroupController::class, 'getGroups']);
   Route::post('/groups', [GroupController::class, 'createGroup']);
