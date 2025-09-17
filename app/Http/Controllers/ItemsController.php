@@ -263,13 +263,12 @@ class ItemsController extends Controller
 
   public function getCategories()
   {
-    $structure = request()->query('structure_id');
+    $structure = request()->query('code_structure');
 
     // get distinct name of the categories of items for the structure
-    return ItemCategory::where(
-      'structure_id',
-      $structure
-    )
+    return ItemCategory::whereHas('structure', function ($query) use ($structure) {
+      $query->where('code_structure', $structure);
+    })
       ->distinct('name')
       ->orderBy('name')
       ->select(['id', 'name', 'identified'])->get();
