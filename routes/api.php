@@ -27,6 +27,7 @@ Route::prefix('/auth')->group(function () {
   Route::post('register', [AuthController::class, 'register']);
   Route::post('whoami', [AuthController::class, 'whoAmI']);
   Route::post('reset-password', [AuthController::class, 'resetPassword']);
+  Route::post('{structure:id}/select-structure', [AuthController::class, 'generateTokenForSelectedStructure'])->middleware('jwt');
 });
 
 Route::post('users/send-reset-password', [UserController::class, 'sendResetPassword']);

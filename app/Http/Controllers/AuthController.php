@@ -34,7 +34,7 @@ class AuthController extends Controller
     // Get the authenticated user.
     $user = Auth::user();
 
-    $tokens = $this->generate_tokens($user, null);
+    $tokens = $this->generate_tokens($user, $user->userStructures()->first(), null);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
@@ -123,7 +123,7 @@ class AuthController extends Controller
 
     $user = $refresh_token->user()->first();
 
-    $tokens = $this->generate_tokens($user, $refresh_token);
+    $tokens = $this->generate_tokens($user, $user->userStructures()->first(), $refresh_token);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
@@ -134,14 +134,8 @@ class AuthController extends Controller
     );
   }
 
-  private function generate_tokens(User $user, $existing_refresh_token)
+  private function generate_tokens(User $user, Structure $structure, $existing_refresh_token)
   {
-    Log::info('Existing refresh token: ', [$existing_refresh_token]);
-    $user_structures = $user->userStructures()->get();
-    Log::info('User structures query: ', [$user_structures]);
-
-    $structure = $user_structures->first();
-
     $refresh_token = $existing_refresh_token->token ?? uuid7();
     $code_mask = match ($structure?->type) {
       Structure::NATIONAL, Structure::UNITE => substr($structure?->code_structure, 0, -2),
@@ -153,9 +147,9 @@ class AuthController extends Controller
       'type' => TokenType::ACCESS,
       'selected_structure' => [
         'code_mask' => $code_mask,
-        'id' => $user_structures->first()?->id,
-        'code' => $user_structures->first()?->code_structure,
-        'role' => $user_structures->first()?->pivot->role,
+        'id' => $structure->id,
+        'code' => $structure->code_structure,
+        'role' => $structure->pivot->role,
       ],
     ])->fromUser($user);
 
@@ -177,6 +171,27 @@ class AuthController extends Controller
     }
 
     return compact('token', 'refresh_token');
+  }
+
+  public function generateTokenForSelectedStructure(Request $request, Structure $structure)
+  {
+    $user = $request->user();
+
+    $refresh_token = RefreshToken::where('token', $request->get('refresh_token'))->first();
+
+    if (! $refresh_token) {
+      return response()->json(['error' => 'Token not found'], 404);
+    }
+    if ($refresh_token->expires_at < now()) {
+      return response()->json(['error' => 'Token expired'], 401);
+    }
+
+    $structure = $user->userStructures()->where('id', $structure->id)->first();
+    if (! $structure) {
+      return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    return $this->generate_tokens($user, $structure, $refresh_token);
   }
 }
 

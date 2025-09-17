@@ -39,6 +39,8 @@ class JwtMiddleware
 
     $loaded_structure_code = $payload->get('selected_structure.code');
     $structure_code = $request->query('code_structure');
+
+    Log::info("loaded_structure_code: $loaded_structure_code, structure_code: $structure_code");
     if ($loaded_structure_code !== $structure_code) {
       return response()->json(['error' => 'Non autorisé'], 403);
     }
