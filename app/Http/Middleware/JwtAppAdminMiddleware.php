@@ -24,7 +24,7 @@ class JwtAppAdminMiddleware
       $role = $payload->get('role');
 
       if ($role != 'admin') {
-        throw new JWTException('not admin');
+        throw new JWTException('not app admin');
       }
     } catch (JWTException $e) {
       Log::warning('Token not valid', ['error' => $e->getMessage()]);

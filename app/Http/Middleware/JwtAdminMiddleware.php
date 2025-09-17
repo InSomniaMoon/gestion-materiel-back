@@ -21,16 +21,25 @@ class JwtAdminMiddleware
       JWTAuth::parseToken()->authenticate();
       // get role claim from token
       $payload = JWTAuth::parseToken()->getPayload();
-      $structures = $payload->get('admin_structures');
+      $structure = $payload->get('selected_structure');
+      $mask = $payload->get('selected_structure.code_mask');
+      $code_structure = $request->query('code_structure');
 
-      $structures_id = $request->query('structure_id');
-      if (! in_array($structures_id, haystack: $structures)) {
-        throw new JWTException('not admin');
+      // Vérifie si le code_structure commence par le mask
+      if (! is_string($mask) || ! is_string($code_structure) || strncmp($code_structure, $mask, strlen($mask)) !== 0) {
+        throw new JWTException("Le code_structure $code_structure ne correspond pas au mask $mask");
+      }
+      if ($structure['code'] !== $code_structure || $structure['role'] !== 'admin') {
+        throw new JWTException("tentative d'accès non admin à la structure $code_structure avec le rôle {$structure['role']}");
       }
     } catch (JWTException $e) {
       Log::warning('Token non valide', ['error' => $e->getMessage()]);
 
       return response()->json(['error' => 'Token non valide'], 401);
+    } catch (\Exception $e) {
+      Log::error('Erreur serveur', ['error' => $e->getMessage()]);
+
+      return response()->json(['error' => 'Erreur serveur'], 500);
     }
 
     return $next($request);

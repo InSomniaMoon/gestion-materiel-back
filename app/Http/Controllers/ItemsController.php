@@ -342,8 +342,18 @@ class ItemsController extends Controller
       ->leftJoinSub($usedQuantities, 'oqu', function ($join) {
         $join->on('oqu.id', '=', 'items.id');
       })
-      ->whereHas('items', function ($query) use ($request, $structure) {
-        $query->where('structure.code_structure', 'like', substr($structure->code, 0, -2).'%');
+      ->whereHas('structure', function ($query) use ($request, $structure) {
+        switch ($structure->type) {
+          case Structure::GROUPE:
+            // group can see only its items
+            $query->where('id', $request->query('structure_id'));
+            break;
+          case Structure::UNITE:
+            // unit can see only its items
+            $query->where('code_structure', 'like', substr($structure->code, 0, -2).'%');
+
+            break;
+        }
       })
       // ->where('items.structure_id', 'like', substr($structure->code, 0, -2) . '%')
       ->where(function ($query) use ($start_date, $end_date) {

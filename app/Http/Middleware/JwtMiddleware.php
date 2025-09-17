@@ -18,8 +18,8 @@ class JwtMiddleware
    */
   public function handle(Request $request, \Closure $next): Response
   {
-    if ($request->query('structure_id') === null) {
-      return response()->json(['error' => 'le paramètre structure_id est requis'], 422);
+    if ($request->query('code_structure') === null) {
+      return response()->json(['error' => 'le paramètre code_structure est requis'], 422);
     }
     try {
       JWTAuth::parseToken()->authenticate();
@@ -37,9 +37,9 @@ class JwtMiddleware
       return response()->json(['error' => 'Token non valide'], 401);
     }
 
-    $structures = $payload->get('user_structures');
-    $structure_id = $request->query('structure_id');
-    if (! in_array($structure_id, $structures)) {
+    $loaded_structure_code = $payload->get('selected_structure.code');
+    $structure_code = $request->query('code_structure');
+    if ($loaded_structure_code !== $structure_code) {
       return response()->json(['error' => 'Non autorisé'], 403);
     }
 

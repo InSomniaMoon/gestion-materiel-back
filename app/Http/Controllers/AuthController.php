@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\TokenType;
 use App\Models\RefreshToken;
+use App\Models\Structure;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
+use function Laravel\Prompts\select;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -137,17 +139,24 @@ class AuthController extends Controller
     Log::info('Existing refresh token: ', [$existing_refresh_token]);
     $user_structures = $user->userStructures()->get();
     Log::info('User structures query: ', [$user_structures]);
-    $admin_structures =
-      $user_structures->filter(fn ($group) => $group->pivot->role === 'admin');
-    // generate a uuidV7
+
+    $structure = $user_structures->first();
 
     $refresh_token = $existing_refresh_token->token ?? uuid7();
-
+    $code_mask = match ($structure?->type) {
+      Structure::NATIONAL, Structure::UNITE => substr($structure?->code_structure, 0, -2),
+      Structure::GROUPE, Structure::TERRITOIRE => $structure?->code_structure,
+      default => $structure?->code_structure,
+    };
     $token = JWTAuth::claims([
       'role' => $user->role,
       'type' => TokenType::ACCESS,
-      'user_structures' => $user_structures->map(fn ($group) => $group->id),
-      'admin_structures' => $admin_structures->map(fn ($group) => $group->id),
+      'selected_structure' => [
+        'code_mask' => $code_mask,
+        'id' => $user_structures->first()?->id,
+        'code' => $user_structures->first()?->code_structure,
+        'role' => $user_structures->first()?->pivot->role,
+      ],
     ])->fromUser($user);
 
     //save refresh token
