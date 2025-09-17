@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use Validator;
 
 class EventController extends Controller
@@ -108,13 +109,23 @@ class EventController extends Controller
 
   public function delete(Request $request, Event $event)
   {
-    if (! $this->has_user_access_toEvent($request, $event)) {
-      return response()->json(['error' => 'Unauthorized'], 403);
+    $structure = $event->structure()->first();
+    // peut delete si c'est un admin de la structure parente, ou il fait partie de la structure ou il est le créateur
+    $code_structure_mask = JWTAuth::parseToken()->getPayload()->get('selected_structure.mask');
+    $is_parent_structure_admin = $request->user()
+      ->userStructures()
+      ->where('code_structure', 'like', $code_structure_mask)
+      ->where('role', 'admin')->exists();
+    $is_user_member = $request->user()->userStructures()->where('id', $structure->id)->exists();
+    $is_event_creator = $request->user()->id === $event->user_id;
+
+    if ($is_parent_structure_admin || $is_user_member || $is_event_creator) {
+      $event->delete();
+
+      return response()->json(null, 204);
     }
 
-    $event->delete();
-
-    return response()->json(null, 204);
+    return response()->json(['error' => 'Unauthorized'], 403);
   }
 
   public function update(Request $request, Event $event)
@@ -154,11 +165,18 @@ class EventController extends Controller
   private function has_user_access_toEvent(Request $request, Event $event)
   {
     $user = $request->user();
-    // le user fait partie de l'structureé mais n'est pas forcément le créateur. ou le user est un admin dans le groupe de l'structureé
-    $structure = $event->structure()->first();
-    //TODO
-    $is_group_admin = $user->userStructures()->where('id', $structure->id)->where('role', 'admin')->exists();
+    if ($user->id === $event->user_id) {
+      return true;
+    }
 
-    return $user->userStructures()->where('id', $event->structure_id)->exists() || $is_group_admin;
+    $payload = JWTAuth::parseToken()->getPayload();
+    $code_structure_mask = $payload->get('selected_structure.mask');
+
+    // le user fait partie de l'structure mais n'est pas forcément le créateur. ou le user est un admin dans le groupe de la structure
+    $structure = $event->structure()->first();
+    $isFromStructure = $user->userStructures()->where('code_structure', $structure->code_structure)->exists();
+    $is_structure_admin = $user->userStructures()->where('id', $structure->id)->where('role', 'admin')->exists();
+
+    return $isFromStructure || $is_structure_admin;
   }
 }

@@ -35,7 +35,7 @@ class UserController extends Controller
     $sortBy = $request->input('order_by', 'lastname');
     $orderBy = $request->input('sort_by', 'asc');
 
-    $structure = Structure::find($request->input('structure_id', 'code_structure'));
+    $structure = Structure::where('code_structure', $request->input('code_structure'))->first();
 
     $users = User::
       with([
