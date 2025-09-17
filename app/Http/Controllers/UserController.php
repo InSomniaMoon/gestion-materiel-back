@@ -96,7 +96,7 @@ class UserController extends Controller
     return response()->json($users);
   }
 
-  public function createUserWithGroup(Request $request)
+  public function createUserWithStructure(Request $request)
   {
     $request->merge(['app_role' => 'user']);
 
@@ -141,20 +141,20 @@ class UserController extends Controller
     return response()->json($user, 201);
   }
 
-  public function getUserGroups(Request $request, User $user)
+  public function getUserStructures(Request $request, User $user)
   {
-    $groups = $user->userGroups()->get();
+    $structures = $user->userStructures()->get();
 
-    return response()->json($groups);
+    return response()->json($structures);
   }
 
   /**
    * {
-   *   "groups_to_add": [{
+   *   "structures_to_add": [{
    * id: 1,
    * role: "admin"}],
-   *  "groups_to_remove": [1]
-   *  "groups_to_update": [{
+   *  "structures_to_remove": [1]
+   *  "structures_to_update": [{
    * id: 1,
    * role: "admin"
    * }]

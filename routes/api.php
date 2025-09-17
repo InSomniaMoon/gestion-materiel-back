@@ -3,7 +3,6 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeatureClickController;
-use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ItemCategoryController;
 use App\Http\Controllers\ItemOptionController;
 use App\Http\Controllers\ItemOptionIssueController;
@@ -34,7 +33,7 @@ Route::post('users/send-reset-password', [UserController::class, 'sendResetPassw
 
 Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::get('users', [UserController::class, 'getPaginatedUsers']);
-  Route::post('users', [UserController::class, 'createUserWithGroup']);
+  Route::post('users', [UserController::class, 'createUserWithStructure']);
   Route::get('users/exists', [UserController::class, 'checkUserExists']);
 
   Route::get('items', [ItemsController::class, 'index']);
@@ -107,11 +106,11 @@ Route::prefix('/features')->middleware('jwt')->group(function () {
 Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
   Route::get('/users', [UserController::class, 'getBackofficePaginatedUsers']);
   Route::post('/users', [UserController::class, 'createUser']);
-  Route::get('/users/{user:id}/groups', [UserController::class, 'getUserGroups']);
-  Route::put('/users/{user:id}/groups', [UserController::class, 'updateUserStructures']);
+  Route::get('/users/{user:id}/structures', [UserController::class, 'getUserStructures']);
+  Route::put('/users/{user:id}/structures', [UserController::class, 'updateUserStructures']);
 
-  Route::get('/groups', [GroupController::class, 'getGroups']);
-  Route::post('/groups', [GroupController::class, 'createGroup']);
-  Route::put('/groups/{group:id}', [GroupController::class, 'updateGroup']);
-  Route::post('/groups/image', [GroupController::class, 'uploadFile']);
+  Route::get('/structures', [StructureController::class, 'getGroups']);
+  Route::post('/structures', [StructureController::class, 'createGroup']);
+  Route::put('/structures/{structure:id}', [StructureController::class, 'updateGroup']);
+  Route::post('/structures/image', [StructureController::class, 'uploadFile']);
 });

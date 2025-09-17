@@ -21,8 +21,8 @@ class ItemCategory extends Model
     return $this->hasMany(Item::class, 'category_id');
   }
 
-  public function group()
+  public function structure()
   {
-    return $this->belongsTo(Group::class);
+    return $this->belongsTo(Structure::class);
   }
 }

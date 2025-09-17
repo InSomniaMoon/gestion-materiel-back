@@ -57,9 +57,9 @@ class Item extends Model
     return ItemFactory::new();
   }
 
-  public function group()
+  public function structure()
   {
-    return $this->belongsTo(Group::class);
+    return $this->belongsTo(Structure::class);
   }
 
   public function category()

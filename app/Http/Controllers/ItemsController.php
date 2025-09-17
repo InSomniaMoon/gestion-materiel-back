@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EventSubscription;
 use App\Models\Item;
 use App\Models\ItemCategory;
+use App\Models\Structure;
 use App\Models\UserGroup;
 use App\Models\UserStructure;
 use Carbon\Carbon;
@@ -316,6 +317,7 @@ class ItemsController extends Controller
       'for_event' => 'nullable|exists:events,id',
     ])->validate();
 
+    $structure = Structure::find(request()->query('structure_id'));
     $start_date = Carbon::parse($request->start_date);
     $end_date = Carbon::parse($request->end_date);
     $forEventId = $request->query('for_event');
@@ -340,7 +342,10 @@ class ItemsController extends Controller
       ->leftJoinSub($usedQuantities, 'oqu', function ($join) {
         $join->on('oqu.id', '=', 'items.id');
       })
-      ->where('items.structure_id', $request->query('structure_id'))
+      ->whereHas('items', function ($query) use ($request, $structure) {
+        $query->where('structure.code_structure', 'like', substr($structure->code, 0, -2).'%');
+      })
+      // ->where('items.structure_id', 'like', substr($structure->code, 0, -2) . '%')
       ->where(function ($query) use ($start_date, $end_date) {
         $query->where(function ($sub) use ($start_date, $end_date) {
           $sub->whereRaw('not exists (
