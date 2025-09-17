@@ -146,7 +146,7 @@ class AuthController extends Controller
       'role' => $user->role,
       'type' => TokenType::ACCESS,
       'selected_structure' => [
-        'code_mask' => $code_mask,
+        'mask' => $code_mask,
         'id' => $structure->id,
         'code' => $structure->code_structure,
         'role' => $structure->pivot->role,

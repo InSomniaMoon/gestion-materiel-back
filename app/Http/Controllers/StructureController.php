@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
 use Storage;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class StructureController extends Controller
 {
@@ -117,9 +118,11 @@ class StructureController extends Controller
 
   public function getStructuresWithMembers(Request $request)
   {
-    $structure_id = $request->query('structure_id');
+    $code_structure = $request->query('code_structure');
+    // access to jwt payload
+    $selected_structure = JWTAuth::parseToken()->getPayload()->get('selected_structure.code');
 
-    $structure = Structure::find($structure_id);
+    $structure = Structure::where('code_structure', $code_structure)->first();
 
     if ($structure->type == Structure::GROUPE) {
       // slice 2 last characters

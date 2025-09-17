@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
 use Log;
 use Storage;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ItemsController extends Controller
 {
@@ -22,16 +23,18 @@ class ItemsController extends Controller
   {
     $validator = Validator::make($request->all(), Item::$validation);
 
-    $structure_id = $request->query('structure_id');
+    $code_structure = $request->query('code_structure');
 
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
-
+    $structure = UserStructure::where('user_id', $request->user()->id)
+      ->whereHas('structure', function ($query) use ($code_structure) {
+        $query->where('code_structure', $code_structure);
+      })
+      ->firstOrFail();
     if (
-      ! UserStructure::where('user_id', $request->user()->id)
-        ->where('structure_id', $structure_id)
-        ->firstOrFail()
+      ! $structure
     ) {
       return response()->json(['message' => 'Unauthorized'], 401);
     }
@@ -40,7 +43,7 @@ class ItemsController extends Controller
       'name' => $request->name,
       'description' => $request->description,
       'category_id' => $request->category_id,
-      'structure_id' => $structure_id,
+      'structure_id' => $structure->id,
       'image' => $request->image,
     ]);
     $item->save();
@@ -317,10 +320,11 @@ class ItemsController extends Controller
       'for_event' => 'nullable|exists:events,id',
     ])->validate();
 
-    $structure = Structure::find(request()->query('structure_id'));
     $start_date = Carbon::parse($request->start_date);
     $end_date = Carbon::parse($request->end_date);
     $forEventId = $request->query('for_event');
+    $code_structure_mask = JWTAuth::parseToken()->getPayload()->get('selected_structure.mask');
+
     // 1. Quantité utilisée pour chaque item non identifié
     $usedQuantities = EventSubscription::query()
       ->leftJoin('events as e', 'e.id', '=', 'event_subscriptions.event_id')
@@ -342,20 +346,9 @@ class ItemsController extends Controller
       ->leftJoinSub($usedQuantities, 'oqu', function ($join) {
         $join->on('oqu.id', '=', 'items.id');
       })
-      ->whereHas('structure', function ($query) use ($request, $structure) {
-        switch ($structure->type) {
-          case Structure::GROUPE:
-            // group can see only its items
-            $query->where('id', $request->query('structure_id'));
-            break;
-          case Structure::UNITE:
-            // unit can see only its items
-            $query->where('code_structure', 'like', substr($structure->code, 0, -2).'%');
-
-            break;
-        }
+      ->whereHas('structure', function ($query) use ($request, $code_structure_mask) {
+        $query->where('code_structure', 'like', "$code_structure_mask%");
       })
-      // ->where('items.structure_id', 'like', substr($structure->code, 0, -2) . '%')
       ->where(function ($query) use ($start_date, $end_date) {
         $query->where(function ($sub) use ($start_date, $end_date) {
           $sub->whereRaw('not exists (
