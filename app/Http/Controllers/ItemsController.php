@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\EventSubscription;
 use App\Models\Item;
 use App\Models\ItemCategory;
-use App\Models\Structure;
-use App\Models\UserGroup;
 use App\Models\UserStructure;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -76,12 +74,12 @@ class ItemsController extends Controller
     $orderBy = $request->query('order_by', 'name');
     $orderDir = $request->query('sort_by', 'asc');
     $search = $request->query('q');
-    $structure_id = $request->query('structure_id');
+    $code_structure = $request->query('code_structure');
 
     $category = $request->query('category_id');
 
     $validator = Validator::make($request->all(), [
-      'structure_id' => 'required|exists:structures,id',
+      'code_structure' => 'required|exists:structures,code_structure',
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:1',
       'order_by' => 'in:name,created_at,updated_at,category_id,open_option_issues_count,state',
@@ -95,9 +93,10 @@ class ItemsController extends Controller
 
     // Get all items paginated with their itemOptions
 
-    $items = Item::where('structure_id', $structure_id)
-      ->with('category')
-      ->with('options');
+    $items = Item::whereHas('structure', function ($query) use ($code_structure) {
+      $query->where('code_structure', $code_structure);
+    })
+      ->with(['category', 'options']);
 
     if ($isAdmin) {
       $items = $items->withCount([
