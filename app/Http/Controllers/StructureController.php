@@ -7,12 +7,13 @@ use App\Models\Structure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
+use Log;
 use Storage;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class StructureController extends Controller
 {
-  public function getGroups(Request $request)
+  public function getStructures(Request $request)
   {
     if (request()->get('all')) {
       return Structure::orderBy('name', 'ASC')->get();
@@ -39,13 +40,15 @@ class StructureController extends Controller
     return response()->json($structures);
   }
 
-  public function updateStructure(Request $request, Structure $structure)
+  public function update(Request $request, Structure $structure)
   {
     $request->validate([
       'name' => 'required|string',
       'image' => 'nullable|string',
       'description' => 'nullable|string',
     ]);
+
+    Log::info($structure);
 
     $structure->name = $request->name;
     $structure->description = $request->description;
@@ -70,7 +73,6 @@ class StructureController extends Controller
   {
     $validation = Validator::make($request->all(), [
       'image' => 'required|image|max:2048',
-
     ]);
 
     if ($validation->fails()) {

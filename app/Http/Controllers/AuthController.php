@@ -34,11 +34,10 @@ class AuthController extends Controller
     // Get the authenticated user.
     $user = Auth::user();
 
-    $tokens = $this->generate_tokens($user, $user->userStructures()->first(), null);
+    $structures = $user->userStructures()->orderBy('code_structure')->get();
+    $tokens = $this->generate_tokens($user, $structures->first(), null);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
-
-    $structures = $user->userStructures()->get();
 
     return response()->json(
       compact('user', 'structures', 'token', 'refresh_token')
@@ -122,12 +121,11 @@ class AuthController extends Controller
     }
 
     $user = $refresh_token->user()->first();
+    $structures = $user->userStructures()->orderBy('code_structure')->get();
 
-    $tokens = $this->generate_tokens($user, $user->userStructures()->first(), $refresh_token);
+    $tokens = $this->generate_tokens($user, $structures->first(), $refresh_token);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
-
-    $structures = $user->userStructures()->get();
 
     return response()->json(
       compact('user', 'structures', 'token', 'refresh_token')

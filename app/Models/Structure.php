@@ -17,10 +17,15 @@ class Structure extends Model
   protected $table = 'structures';
 
   protected $fillable = [
+    'id',
+    'name',
+    'description',
+    'image',
     'code_structure',
     'nom_structure',
-    'name',
-    'image',
+    'color',
+    'type',
+    'parent_code',
   ];
 
   public $timestamps = false;

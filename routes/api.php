@@ -61,7 +61,8 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
 
   Route::get('structures', [StructureController::class, 'getStructuresWithMembers']);
   Route::post('structures', [StructureController::class, 'store']);
-  Route::patch('structures/{unit:id}', [StructureController::class, 'update']);
+  Route::post('structures/image', [StructureController::class, 'uploadFile']);
+  Route::patch('structures/{structure:id}', [StructureController::class, 'update']);
 
   Route::post('structures/users', [StructureController::class, 'addUserToStructure']);
 });
@@ -110,7 +111,7 @@ Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
   Route::get('/users/{user:id}/structures', [UserController::class, 'getUserStructures']);
   Route::put('/users/{user:id}/structures', [UserController::class, 'updateUserStructures']);
 
-  Route::get('/structures', [StructureController::class, 'getGroups']);
+  Route::get('/structures', [StructureController::class, 'getStructures']);
   Route::post('/structures', [StructureController::class, 'createGroup']);
   Route::put('/structures/{structure:id}', [StructureController::class, 'updateGroup']);
   Route::post('/structures/image', [StructureController::class, 'uploadFile']);
