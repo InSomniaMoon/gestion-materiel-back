@@ -43,17 +43,23 @@ class StructureController extends Controller
   public function update(Request $request, Structure $structure)
   {
     $request->validate([
-      'name' => 'required|string',
+      'name' => 'nullable|string',
       'image' => 'nullable|string',
       'description' => 'nullable|string',
     ]);
 
-    Log::info($structure);
+    // sync structure data
 
-    $structure->name = $request->name;
-    $structure->description = $request->description;
+    if ($request->has('name')) {
+      // update name in user_structures table
+      $structure->name = $request->name;
+    }
 
-    if ($request->input('image')) {
+    if ($request->has('description')) {
+      $structure->description = $request->description;
+    }
+
+    if ($request->has('image')) {
       // delete old image if exists
       if ($structure->image) {
         Storage::disk('public')->delete($structure->image);

@@ -24,7 +24,6 @@ class JwtAdminMiddleware
       $structure = $payload->get('selected_structure');
       $mask = $payload->get('selected_structure.mask');
       $code_structure = $request->query('code_structure');
-      Log::info("mask: $mask, code_structure: $code_structure");
 
       // Vérifie si le code_structure commence par le mask
       if (! is_string($mask) || ! is_string($code_structure) || strncmp($code_structure, $mask, strlen($mask)) !== 0) {
