@@ -3,13 +3,12 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeatureClickController;
-use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ItemCategoryController;
 use App\Http\Controllers\ItemOptionController;
 use App\Http\Controllers\ItemOptionIssueController;
 use App\Http\Controllers\ItemsController;
+use App\Http\Controllers\StructureController;
 use App\Http\Controllers\SubscriptionController;
-use App\Http\Controllers\UnitsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,13 +27,14 @@ Route::prefix('/auth')->group(function () {
   Route::post('register', [AuthController::class, 'register']);
   Route::post('whoami', [AuthController::class, 'whoAmI']);
   Route::post('reset-password', [AuthController::class, 'resetPassword']);
+  Route::post('{structure:id}/select-structure', [AuthController::class, 'generateTokenForSelectedStructure'])->middleware('jwt');
 });
 
 Route::post('users/send-reset-password', [UserController::class, 'sendResetPassword']);
 
 Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::get('users', [UserController::class, 'getPaginatedUsers']);
-  Route::post('users', [UserController::class, 'createUserWithGroup']);
+  Route::post('users', [UserController::class, 'createUserWithStructure']);
   Route::get('users/exists', [UserController::class, 'checkUserExists']);
 
   Route::get('items', [ItemsController::class, 'index']);
@@ -59,11 +59,11 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
 
   Route::get('issues/open', action: [ItemOptionIssueController::class, 'getPaginatedOpenedIssues']);
 
-  Route::get('units', [UnitsController::class, 'getUnits']);
-  Route::post('units', [UnitsController::class, 'createUnit']);
-  Route::patch('units/{unit:id}', [UnitsController::class, 'updateUnit']);
+  Route::get('structures', [StructureController::class, 'getStructuresWithMembers']);
+  Route::post('structures', [StructureController::class, 'store']);
+  Route::patch('structures/{unit:id}', [StructureController::class, 'update']);
 
-  Route::post('groups/users', [GroupController::class, 'addUserToGroup']);
+  Route::post('structures/users', [StructureController::class, 'addUserToStructure']);
 });
 
 Route::prefix('/items')->middleware('jwt')->group(function () {
@@ -91,7 +91,7 @@ Route::prefix('/options')->middleware('jwt')->group(function () {
 });
 
 Route::prefix('events')->middleware('jwt')->group(function () {
-  Route::get('/', [EventController::class, 'getEventsForUserForGroup']);
+  Route::get('/', [EventController::class, 'getEventsForUserForStructure']);
   Route::post('/', [EventController::class, 'create']);
   Route::delete('/{event:id}', [EventController::class, 'delete']);
   Route::patch('/{event:id}', [EventController::class, 'update']);
@@ -107,11 +107,11 @@ Route::prefix('/features')->middleware('jwt')->group(function () {
 Route::prefix('/backoffice')->middleware('jwt:admin:app')->group(function () {
   Route::get('/users', [UserController::class, 'getBackofficePaginatedUsers']);
   Route::post('/users', [UserController::class, 'createUser']);
-  Route::get('/users/{user:id}/groups', [UserController::class, 'getUserGroups']);
-  Route::put('/users/{user:id}/groups', [UserController::class, 'updateUserGroups']);
+  Route::get('/users/{user:id}/structures', [UserController::class, 'getUserStructures']);
+  Route::put('/users/{user:id}/structures', [UserController::class, 'updateUserStructures']);
 
-  Route::get('/groups', [GroupController::class, 'getGroups']);
-  Route::post('/groups', [GroupController::class, 'createGroup']);
-  Route::put('/groups/{group:id}', [GroupController::class, 'updateGroup']);
-  Route::post('/groups/image', [GroupController::class, 'uploadFile']);
+  Route::get('/structures', [StructureController::class, 'getGroups']);
+  Route::post('/structures', [StructureController::class, 'createGroup']);
+  Route::put('/structures/{structure:id}', [StructureController::class, 'updateGroup']);
+  Route::post('/structures/image', [StructureController::class, 'uploadFile']);
 });

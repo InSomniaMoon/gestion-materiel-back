@@ -14,14 +14,14 @@ class Group extends Model
 
   public function users()
   {
-    return $this->belongsToMany(User::class, UserGroup::class, 'group_id', 'user_id')
-      ->using(UserGroup::class)
+    return $this->belongsToMany(User::class, UserStructure::class, 'structure_id', 'user_id')
+      ->using(UserStructure::class)
       ->withPivot('role');
   }
 
-  public function userGroups()
+  public function userStructures()
   {
-    return $this->hasMany(UserGroup::class, 'group_id');
+    return $this->hasMany(UserStructure::class, 'structure_id');
   }
 
   public function items()

@@ -4,20 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use Validator;
 
 class EventController extends Controller
 {
-  public function getEventsForUserForGroup(Request $request)
+  public function getEventsForUserForStructure(Request $request)
   {
-    $group_id = $request->input('group_id');
+    $structure_id = $request->input('structure_id');
 
     $events = Event::
-      with(['unit:id,color'])
-      ->where(function ($query) use ($group_id) {
+      with(['structure:id,color'])
+      ->where(function ($query) use ($structure_id) {
         $query
-          ->whereHas('unit', function ($q) use ($group_id) {
-            $q->where('group_id', $group_id);
+          ->whereHas('structure', function ($q) use ($structure_id) {
+            $q->where('structure_id', $structure_id);
           })
           ->where('start_date', '>=', now())
           ->orWhere('end_date', '>=', now());
@@ -29,9 +30,9 @@ class EventController extends Controller
 
   public function create(Request $request)
   {
-    //{"name":"test","unit_id":1,"start_date":"2025-07-19 15:00","end_date":"2025-07-20T13:00:00.000Z","materials":[{"id":101}],"comment":""}
+    //{"name":"test","structure_id":1,"start_date":"2025-07-19 15:00","end_date":"2025-07-20T13:00:00.000Z","materials":[{"id":101}],"comment":""}
     Validator::make($request->all(), [
-      'unit_id' => 'required|integer|exists:units,id',
+      'structure_id' => 'required|integer|exists:structures,id',
       'name' => 'required|string|max:255',
       'start_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"',
       'end_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"|after_or_equal:start_date',
@@ -41,7 +42,7 @@ class EventController extends Controller
 
     ])->validate();
 
-    $event = Event::create($request->only('unit_id', 'name', 'start_date', 'end_date') + ['user_id' => $request->user()->id]);
+    $event = Event::create($request->only('structure_id', 'name', 'start_date', 'end_date') + ['user_id' => $request->user()->id]);
 
     // Attach materials to the event (array of item IDs)
     $itemIdsAndQuantities = collect($request->input('materials', []))
@@ -53,9 +54,10 @@ class EventController extends Controller
         return null;
       })
       ->filter()
-      ->reduce(function ($carry, $item) {
-        return $carry + $item;
-      }, []);
+      ->reduce(
+        fn ($carry, $item) => $carry + $item,
+        []
+      );
     if (! empty($itemIdsAndQuantities)) {
       $event->eventSubscriptions()->sync($itemIdsAndQuantities);
     }
@@ -72,9 +74,9 @@ class EventController extends Controller
           $query->select('id', 'name');
         },
       ])
-      // with(['unit', 'eventSubscriptions', 'eventSubscriptions.options'])
-      // récupère les événements en cours où au moins une unité de laquelle l'utilisateur est membre
-      ->whereHas('unit', function ($query) use ($request) {
+      // with(['structure', 'eventSubscriptions', 'eventSubscriptions.options'])
+      // récupère les événements en cours où au moins une structureé de laquelle l'utilisateur est membre
+      ->whereHas('structure', function ($query) use ($request) {
         $query->where('user_id', $request->user()->id);
       })
       ->where('start_date', '<=', now())
@@ -92,7 +94,7 @@ class EventController extends Controller
 
     $event
       ->load([
-        'unit',
+        'structure',
         'eventSubscriptions' => function ($query) {
           $query
             ->select('items.id', 'items.name', 'items.category_id', 'quantity')
@@ -107,19 +109,29 @@ class EventController extends Controller
 
   public function delete(Request $request, Event $event)
   {
-    if (! $this->has_user_access_toEvent($request, $event)) {
-      return response()->json(['error' => 'Unauthorized'], 403);
+    $structure = $event->structure()->first();
+    // peut delete si c'est un admin de la structure parente, ou il fait partie de la structure ou il est le créateur
+    $code_structure_mask = JWTAuth::parseToken()->getPayload()->get('selected_structure.mask');
+    $is_parent_structure_admin = $request->user()
+      ->userStructures()
+      ->where('code_structure', 'like', $code_structure_mask)
+      ->where('role', 'admin')->exists();
+    $is_user_member = $request->user()->userStructures()->where('id', $structure->id)->exists();
+    $is_event_creator = $request->user()->id === $event->user_id;
+
+    if ($is_parent_structure_admin || $is_user_member || $is_event_creator) {
+      $event->delete();
+
+      return response()->json(null, 204);
     }
 
-    $event->delete();
-
-    return response()->json(null, 204);
+    return response()->json(['error' => 'Unauthorized'], 403);
   }
 
   public function update(Request $request, Event $event)
   {
     $request->validate([
-      'unit_id' => 'required|integer|exists:units,id',
+      'structure_id' => 'required|integer|exists:structures,id',
       'name' => 'required|string|max:255',
       'start_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"',
       'end_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"|after_or_equal:start_date',
@@ -153,10 +165,18 @@ class EventController extends Controller
   private function has_user_access_toEvent(Request $request, Event $event)
   {
     $user = $request->user();
-    // le user fait partie de l'unité mais n'est pas forcément le créateur. ou le user est un admin dans le groupe de l'unité
-    $unit = $event->unit()->first();
-    $is_group_admin = $user->userGroups()->where('id', $unit->group_id)->where('role', 'admin')->exists();
+    if ($user->id === $event->user_id) {
+      return true;
+    }
 
-    return $user->units()->where('id', $event->unit_id)->exists() || $is_group_admin;
+    $payload = JWTAuth::parseToken()->getPayload();
+    $code_structure_mask = $payload->get('selected_structure.mask');
+
+    // le user fait partie de l'structure mais n'est pas forcément le créateur. ou le user est un admin dans le groupe de la structure
+    $structure = $event->structure()->first();
+    $isFromStructure = $user->userStructures()->where('code_structure', $structure->code_structure)->exists();
+    $is_structure_admin = $user->userStructures()->where('id', $structure->id)->where('role', 'admin')->exists();
+
+    return $isFromStructure || $is_structure_admin;
   }
 }

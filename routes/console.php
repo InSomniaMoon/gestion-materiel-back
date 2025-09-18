@@ -2,6 +2,7 @@
 
 use App\Models\Group;
 use App\Models\UserGroup;
+use App\Models\UserStructure;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -59,9 +60,9 @@ Artisan::command('create:admin', function () {
   DB::beginTransaction();
 
   $user->save();
-  UserGroup::create([
+  UserStructure::create([
     'user_id' => $user->id,
-    'group_id' => $group,
+    'structure_id' => $group,
     'role' => 'admin',
   ]);
   DB::commit();

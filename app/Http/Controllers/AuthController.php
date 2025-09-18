@@ -4,14 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Enums\TokenType;
 use App\Models\RefreshToken;
+use App\Models\Structure;
 use App\Models\User;
-use App\Models\UserGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
+use function Laravel\Prompts\select;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -33,19 +34,14 @@ class AuthController extends Controller
     // Get the authenticated user.
     $user = Auth::user();
 
-    $user_groups = UserGroup::where('user_id', $user->id);
-    $admin_groups = $user_groups->where('role', 'admin')->get();
-
-    $tokens = $this->generate_tokens($user, null);
+    $tokens = $this->generate_tokens($user, $user->userStructures()->first(), null);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
-    $groups = $user->userGroups()->get();
-
-    $units = $user->units()->get();
+    $structures = $user->userStructures()->get();
 
     return response()->json(
-      compact('user', 'groups', 'units', 'token', 'refresh_token')
+      compact('user', 'structures', 'token', 'refresh_token')
     );
   }
 
@@ -125,41 +121,36 @@ class AuthController extends Controller
       return response()->json(['error' => 'Token expired'], 401);
     }
 
-    $user = User::find($refresh_token->user_id);
+    $user = $refresh_token->user()->first();
 
-    $tokens = $this->generate_tokens($user, $refresh_token);
+    $tokens = $this->generate_tokens($user, $user->userStructures()->first(), $refresh_token);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
-    $groups = $user->userGroups()->get();
-
-    $units = $user->units()->get();
+    $structures = $user->userStructures()->get();
 
     return response()->json(
-      compact('user', 'groups', 'units', 'token', 'refresh_token')
+      compact('user', 'structures', 'token', 'refresh_token')
     );
   }
 
-  private function generate_tokens($user, $existing_refresh_token)
+  private function generate_tokens(User $user, Structure $structure, $existing_refresh_token)
   {
-    Log::info('Existing refresh token: ', [$existing_refresh_token]);
-    $user_groups = $user->userGroups()->get();
-    $admin_groups =
-      $user_groups->filter(fn ($group) => $group->pivot->role === 'admin');
-    // generate a uuidV7
-
     $refresh_token = $existing_refresh_token->token ?? uuid7();
-
+    $code_mask = match ($structure?->type) {
+      Structure::NATIONAL, Structure::UNITE => substr($structure?->code_structure, 0, -2),
+      Structure::GROUPE, Structure::TERRITOIRE => $structure?->code_structure,
+      default => $structure?->code_structure,
+    };
     $token = JWTAuth::claims([
       'role' => $user->role,
       'type' => TokenType::ACCESS,
-      //   'user_groups' => UserGroup::where('user_id', $user->id)->get(),
-      'user_groups' => $user_groups->map(function ($group) {
-        return $group->id;
-      }),
-      'admin_groups' => $admin_groups->map(function ($group) {
-        return $group->id;
-      }),
+      'selected_structure' => [
+        'mask' => $code_mask,
+        'id' => $structure->id,
+        'code' => $structure->code_structure,
+        'role' => $structure->pivot->role,
+      ],
     ])->fromUser($user);
 
     //save refresh token
@@ -180,6 +171,27 @@ class AuthController extends Controller
     }
 
     return compact('token', 'refresh_token');
+  }
+
+  public function generateTokenForSelectedStructure(Request $request, Structure $structure)
+  {
+    $user = $request->user();
+
+    $refresh_token = RefreshToken::where('token', $request->get('refresh_token'))->first();
+
+    if (! $refresh_token) {
+      return response()->json(['error' => 'Token not found'], 404);
+    }
+    if ($refresh_token->expires_at < now()) {
+      return response()->json(['error' => 'Token expired'], 401);
+    }
+
+    $structure = $user->userStructures()->where('id', $structure->id)->first();
+    if (! $structure) {
+      return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    return $this->generate_tokens($user, $structure, $refresh_token);
   }
 }
 

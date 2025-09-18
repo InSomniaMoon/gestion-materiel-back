@@ -25,7 +25,7 @@ class Item extends Model
     'category',
     'usable',
     'date_of_buy',
-    'group_id',
+    'structure_id',
     'category_id',
     'image',
   ];
@@ -57,9 +57,9 @@ class Item extends Model
     return ItemFactory::new();
   }
 
-  public function group()
+  public function structure()
   {
-    return $this->belongsTo(Group::class);
+    return $this->belongsTo(Structure::class);
   }
 
   public function category()

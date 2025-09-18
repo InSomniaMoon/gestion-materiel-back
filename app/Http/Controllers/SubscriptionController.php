@@ -18,7 +18,7 @@ class SubscriptionController extends Controller
       'name' => 'required',
       'start_date' => 'required|date',
       'end_date' => 'required|date',
-      'group_id' => 'required|exists:groups,id',
+      'structure_id' => 'required|exists:structures,id',
       'unit_id' => 'required|exists:units,id',
     ]);
 
@@ -28,7 +28,7 @@ class SubscriptionController extends Controller
     $payload = JWTAuth::parseToken()->getPayload();
     $groups = $payload->get('user_groups');
     // check that the user is in the same group as the item
-    if (! in_array($item->group_id, $groups)) {
+    if (! in_array($item->structure_id, $groups)) {
       return response()->json(['message' => 'Unauthorized'], 401);
     }
 

@@ -81,7 +81,7 @@ class ItemOptionIssueController extends Controller
     if (
       $item->id !== $option->item_id ||
       $option->id !== $optionIssue->item_option_id ||
-      $item->group_id !== (int) $request->input('group_id')
+      $item->structure_id !== (int) $request->input('structure_id')
     ) {
       return response()->json(['error' => 'Forbidden'], status: 403);
     }
@@ -111,7 +111,7 @@ class ItemOptionIssueController extends Controller
   {
     $perPage = $request->input('per_page', 10);
     $page = $request->input('page', 1);
-    $group_id = $request->input('group_id');
+    $structure_id = $request->input('structure_id');
 
     $issues = ItemOptionIssue::where('status', 'open')
       ->with([
@@ -119,9 +119,9 @@ class ItemOptionIssueController extends Controller
         'itemOption.item:id,name',
         'comments.author:id,name',
       ])
-      ->whereHas('itemOption', function ($query) use ($group_id) {
-        $query->whereHas('item', function ($q) use ($group_id) {
-          $q->where('group_id', $group_id);
+      ->whereHas('itemOption', function ($query) use ($structure_id) {
+        $query->whereHas('item', function ($q) use ($structure_id) {
+          $q->where('structure_id', $structure_id);
         });
       })
       ->select([

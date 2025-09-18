@@ -5,16 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\EventSubscription;
 use App\Models\Item;
 use App\Models\ItemCategory;
-use App\Models\UserGroup;
+use App\Models\UserStructure;
 use Carbon\Carbon;
-use Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
 use Log;
 use Storage;
-use Symfony\Component\HttpKernel\Attribute\WithHttpStatus;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ItemsController extends Controller
 {
@@ -22,28 +21,28 @@ class ItemsController extends Controller
   {
     $validator = Validator::make($request->all(), Item::$validation);
 
-    $group_id = $request->query('group_id');
-
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
 
-    if (
-      ! UserGroup::where('user_id', $request->user()->id)
-        ->where('group_id', $group_id)
-        ->firstOrFail()
-    ) {
+    $code_structure = $request->query('code_structure');
+
+    $structure = $request->user()->userStructures()
+      ->where('code_structure', $code_structure)
+      ->firstOrFail();
+    if (! $structure) {
       return response()->json(['message' => 'Unauthorized'], 401);
     }
 
-    $item = new Item([
+    $item = Item::create([
       'name' => $request->name,
       'description' => $request->description,
       'category_id' => $request->category_id,
-      'group_id' => $group_id,
+      'structure_id' => $structure->id,
       'image' => $request->image,
     ]);
-    $item->save();
+
+    Log::info($item);
 
     if ($request->has('options')) {
       // validation for options
@@ -73,12 +72,12 @@ class ItemsController extends Controller
     $orderBy = $request->query('order_by', 'name');
     $orderDir = $request->query('sort_by', 'asc');
     $search = $request->query('q');
-    $group_id = $request->query('group_id');
+    $code_structure = $request->query('code_structure');
 
     $category = $request->query('category_id');
 
     $validator = Validator::make($request->all(), [
-      'group_id' => 'required|exists:groups,id',
+      'code_structure' => 'required|exists:structures,code_structure',
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:1',
       'order_by' => 'in:name,created_at,updated_at,category_id,open_option_issues_count,state',
@@ -92,9 +91,10 @@ class ItemsController extends Controller
 
     // Get all items paginated with their itemOptions
 
-    $items = Item::where('group_id', $group_id)
-      ->with('category')
-      ->with('options');
+    $items = Item::whereHas('structure', function ($query) use ($code_structure) {
+      $query->where('code_structure', $code_structure);
+    })
+      ->with(['category', 'options']);
 
     if ($isAdmin) {
       $items = $items->withCount([
@@ -147,8 +147,8 @@ class ItemsController extends Controller
   public function show(Request $request, Item $item)
   {
     if (
-      ! UserGroup::where('user_id', $request->user()->id)
-        ->where('group_id', $item->group_id)
+      ! UserStructure::where('user_id', $request->user()->id)
+        ->where('structure_id', $item->structure_id)
         ->firstOrFail()
     ) {
       return response()->json(['message' => 'Unauthorized'], 401);
@@ -261,17 +261,15 @@ class ItemsController extends Controller
 
   public function getCategories()
   {
-    $group_id = request()->query('group_id');
-    // get distinct name of the categories of items for the group
-    $categories = ItemCategory::where(
-      'group_id',
-      $group_id
-    )
+    $structure = request()->query('code_structure');
+
+    // get distinct name of the categories of items for the structure
+    return ItemCategory::whereHas('structure', function ($query) use ($structure) {
+      $query->where('code_structure', $structure);
+    })
       ->distinct('name')
       ->orderBy('name')
-      ->get(['id', 'name', 'identified']);
-
-    return response()->json($categories);
+      ->select(['id', 'name', 'identified'])->get();
   }
 
   public function uploadFile(Request $request)
@@ -321,6 +319,8 @@ class ItemsController extends Controller
     $start_date = Carbon::parse($request->start_date);
     $end_date = Carbon::parse($request->end_date);
     $forEventId = $request->query('for_event');
+    $code_structure_mask = JWTAuth::parseToken()->getPayload()->get('selected_structure.mask');
+
     // 1. Quantité utilisée pour chaque item non identifié
     $usedQuantities = EventSubscription::query()
       ->leftJoin('events as e', 'e.id', '=', 'event_subscriptions.event_id')
@@ -342,7 +342,9 @@ class ItemsController extends Controller
       ->leftJoinSub($usedQuantities, 'oqu', function ($join) {
         $join->on('oqu.id', '=', 'items.id');
       })
-      ->where('items.group_id', $request->query('group_id'))
+      ->whereHas('structure', function ($query) use ($request, $code_structure_mask) {
+        $query->where('code_structure', 'like', "$code_structure_mask%");
+      })
       ->where(function ($query) use ($start_date, $end_date) {
         $query->where(function ($sub) use ($start_date, $end_date) {
           $sub->whereRaw('not exists (

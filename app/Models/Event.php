@@ -12,7 +12,7 @@ class Event extends Model
     'name',
     'start_date',
     'end_date',
-    'unit_id',
+    'structure_id',
     'user_id',
     'comment',
   ];
@@ -34,8 +34,8 @@ class Event extends Model
     return $this->belongsTo(User::class);
   }
 
-  public function unit()
+  public function structure()
   {
-    return $this->belongsTo(Unit::class);
+    return $this->belongsTo(Structure::class);
   }
 }

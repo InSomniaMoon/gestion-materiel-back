@@ -15,12 +15,10 @@ class ItemCategoryController extends Controller
     $page = $request->query('page', 1);
     $orderBy = $request->query('order_by', 'name');
     $search = $request->query('q');
-    $group_id = $request->query('group_id');
-
-    $category = $request->query('category_id');
+    $code_structure = $request->query('code_structure');
 
     $validator = Validator::make($request->all(), [
-      'group_id' => 'required|exists:groups,id',
+      'code_structure' => 'required',
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:0',
       'order_by' => 'in:name,created_at,updated_at',
@@ -32,8 +30,9 @@ class ItemCategoryController extends Controller
 
     Log::info('request for getPaginatedCategories', $request->all());
 
-    $items = ItemCategory::where('group_id', $group_id)
-
+    $items = ItemCategory::whereHas('structure', function ($query) use ($code_structure) {
+      $query->where('code_structure', $code_structure);
+    })
       ->orderBy($orderBy);
 
     if ($search) {
@@ -62,10 +61,11 @@ class ItemCategoryController extends Controller
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
-
+    $code_structure = $request->input('code_structure');
+    $structure = StructureController::where('code_structure', $code_structure)->first();
     $category = ItemCategory::create([
       'name' => $request->name,
-      'group_id' => $request->query('group_id'),
+      'structure_id' => $structure->id,
       'identified' => $request->input('identified'),
     ]);
 

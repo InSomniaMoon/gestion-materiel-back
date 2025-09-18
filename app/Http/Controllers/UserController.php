@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Structure;
 use App\Models\User;
-use App\Models\UserGroup;
+use App\Models\UserStructure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -34,11 +35,11 @@ class UserController extends Controller
     $sortBy = $request->input('order_by', 'lastname');
     $orderBy = $request->input('sort_by', 'asc');
 
+    $structure = Structure::where('code_structure', $request->input('code_structure'))->first();
+
     $users = User::
       with([
-        'userGroups' => function ($query) use ($request) {
-          $query->where('id', $request->input('group_id'));
-        },
+        'userStructures:id,name,color,code_structure',
       ])
       ->whereAny([
         DB::raw('lower(firstname)'),
@@ -46,8 +47,17 @@ class UserController extends Controller
         DB::raw('lower(email)'),
       ], 'like', '%'.strtolower($filter).'%')
 
-      ->whereHas('userGroups', function ($query) use ($request) {
-        $query->where('id', $request->input('group_id'));
+      ->whereHas('userStructures', function ($query) use ($request, $structure) {
+        switch ($structure->type) {
+          case Structure::GROUPE:
+            $code_base = substr($structure->code, 0, 2);
+            $query->where('code_structure', 'like', "$code_base%");
+
+            break;
+          default:
+            $query->where('id', $request->input('structure_id'));
+            break;
+        }
       })
       ->orderBy($sortBy, $orderBy)
       ->simplePaginate($size, ['*'], 'page', $page)
@@ -86,7 +96,7 @@ class UserController extends Controller
     return response()->json($users);
   }
 
-  public function createUserWithGroup(Request $request)
+  public function createUserWithStructure(Request $request)
   {
     $request->merge(['app_role' => 'user']);
 
@@ -100,7 +110,7 @@ class UserController extends Controller
       'lastname' => 'required|string',
       'email' => 'required|email',
       'role' => 'required|string',
-      'group_id' => 'integer|required',
+      'structure_id' => 'integer|required|exists:structures,id',
       'phone' => 'string|nullable',
       'app_role' => 'required|string',
     ]);
@@ -120,9 +130,9 @@ class UserController extends Controller
       'phone' => $request->input('phone'),
     ]);
 
-    UserGroup::create([
+    UserStructure::create([
       'user_id' => $user->id,
-      'group_id' => $request->input('group_id'),
+      'structure_id' => $request->input('structure_id'),
       'role' => $request->input('role'),
     ]);
 
@@ -131,50 +141,50 @@ class UserController extends Controller
     return response()->json($user, 201);
   }
 
-  public function getUserGroups(Request $request, User $user)
+  public function getUserStructures(Request $request, User $user)
   {
-    $groups = $user->userGroups()->get();
+    $structures = $user->userStructures()->get();
 
-    return response()->json($groups);
+    return response()->json($structures);
   }
 
   /**
    * {
-   *   "groups_to_add": [{
+   *   "structures_to_add": [{
    * id: 1,
    * role: "admin"}],
-   *  "groups_to_remove": [1]
-   *  "groups_to_update": [{
+   *  "structures_to_remove": [1]
+   *  "structures_to_update": [{
    * id: 1,
    * role: "admin"
    * }]
    * }
    */
-  public function updateUserGroups(Request $request, User $user)
+  public function updateUserStructures(Request $request, User $user)
   {
-    $groups = $request->input('groups', []);
+    $structures = $request->input('structures', []);
 
-    // Remove all user groups for this user
-    UserGroup::where('user_id', $user->id)->delete();
+    // Remove all user structures for this user
+    UserStructure::where('user_id', $user->id)->delete();
 
-    // Prepare new user groups for insertion
+    // Prepare new user structures for insertion
     $insertData = [];
-    foreach ($groups as $group) {
-      if (! empty($group['group_id']) && $group['group_id'] > 0) {
+    foreach ($structures as $structure) {
+      if (! empty($structure['structure_id']) && $structure['structure_id'] > 0) {
         $insertData[] = [
           'user_id' => $user->id,
-          'group_id' => $group['group_id'],
-          'role' => $group['role'] ?? 'user',
+          'structure_id' => $structure['structure_id'],
+          'role' => $structure['role'] ?? 'user',
         ];
       }
     }
 
-    Log::info('Updating user groups', [
+    Log::info('Updating user structures', [
       'insertData' => $insertData,
     ]);
 
     if (! empty($insertData)) {
-      UserGroup::insert($insertData);
+      UserStructure::insert($insertData);
     }
 
     return response()->json();
@@ -190,7 +200,7 @@ class UserController extends Controller
 
     return response()->json([
       'exists' => $user !== null,
-      'already_in_group' => $user?->userGroups()->where('id', $request->input('group_id'))->exists() ?? false,
+      'already_in_structure' => $user?->userStructures()->where('id', $request->input('structure_id'))->exists() ?? false,
     ]);
   }
 
