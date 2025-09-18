@@ -21,30 +21,28 @@ class ItemsController extends Controller
   {
     $validator = Validator::make($request->all(), Item::$validation);
 
-    $code_structure = $request->query('code_structure');
-
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
-    $structure = UserStructure::where('user_id', $request->user()->id)
-      ->whereHas('structure', function ($query) use ($code_structure) {
-        $query->where('code_structure', $code_structure);
-      })
+
+    $code_structure = $request->query('code_structure');
+
+    $structure = $request->user()->userStructures()
+      ->where('code_structure', $code_structure)
       ->firstOrFail();
-    if (
-      ! $structure
-    ) {
+    if (! $structure) {
       return response()->json(['message' => 'Unauthorized'], 401);
     }
 
-    $item = new Item([
+    $item = Item::create([
       'name' => $request->name,
       'description' => $request->description,
       'category_id' => $request->category_id,
       'structure_id' => $structure->id,
       'image' => $request->image,
     ]);
-    $item->save();
+
+    Log::info($item);
 
     if ($request->has('options')) {
       // validation for options

@@ -61,10 +61,11 @@ class ItemCategoryController extends Controller
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
-
+    $code_structure = $request->input('code_structure');
+    $structure = StructureController::where('code_structure', $code_structure)->first();
     $category = ItemCategory::create([
       'name' => $request->name,
-      'structure_id' => $request->query('structure_id'),
+      'structure_id' => $structure->id,
       'identified' => $request->input('identified'),
     ]);
 
