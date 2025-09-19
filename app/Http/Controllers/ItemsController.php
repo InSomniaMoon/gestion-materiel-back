@@ -312,10 +312,14 @@ class ItemsController extends Controller
       'page' => 'integer|min:1',
       'size' => 'integer|min:1|max:100',
       'q' => 'nullable|string|max:255',
+      'order_by' => 'in:items.name,category_id',
+      'sort_by' => 'in:asc,desc',
       'category_id' => 'nullable|exists:item_categories,id',
       'for_event' => 'nullable|exists:events,id',
     ])->validate();
 
+    $orderBy = $request->query('order_by', 'items.name');
+    $orderDir = $request->query('sort_by', 'asc');
     $start_date = Carbon::parse($request->start_date);
     $end_date = Carbon::parse($request->end_date);
     $forEventId = $request->query('for_event');
@@ -335,7 +339,22 @@ class ItemsController extends Controller
     }
 
     // 2. Sélection des items disponibles
-    $items = Item::query()
+    $items = Item::query();
+
+    if ($request->has('q')) {
+      $searchTerm = $request->query('q', '');
+      Log::info("Searching for items with term: $searchTerm");
+      $items->where(function ($query) use ($searchTerm) {
+        $query->where(DB::raw('lower(items.name)'), 'LIKE', '%'.strtolower($searchTerm).'%')
+          ->orWhere(DB::raw('lower(categorie.name)'), 'like', '%'.strtolower($searchTerm).'%');
+      });
+    }
+
+    if ($request->has('category_id')) {
+      $items->where('items.category_id', $request->category_id);
+    }
+
+    $items
       ->leftJoin('item_categories as categorie', 'categorie.id', '=', 'items.category_id')
       ->leftJoin('event_subscriptions as es', 'es.item_id', '=', 'items.id')
       ->leftJoin('events as event', 'event.id', '=', 'es.event_id')
@@ -366,17 +385,12 @@ class ItemsController extends Controller
         'categorie.*',
         'items.*',
         DB::raw('items.stock - COALESCE(oqu.used_quantity, 0) as rest')
-      )
-      ->orderBy('categorie.name')
-      ->orderBy('items.name')
-      ->distinct();
-
-    if ($request->has('category_id')) {
-      $items->where('items.category_id', $request->category_id);
-    }
+      );
 
     return $items
       ->with(['category:identified,id,name'])
+      ->orderBy($orderBy, $orderDir)
+      ->distinct()
       ->paginate(
         $request->query('size', 25),
         ['*'],
