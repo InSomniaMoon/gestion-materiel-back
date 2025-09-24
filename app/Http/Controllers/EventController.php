@@ -69,12 +69,10 @@ class EventController extends Controller
   {
     $events = Event::
       with(relations: [
-        'eventSubscriptions.options',
         'eventSubscriptions' => function ($query) {
           $query->select('id', 'name');
         },
       ])
-      // with(['structure', 'eventSubscriptions', 'eventSubscriptions.options'])
       // récupère les événements en cours où au moins une structureé de laquelle l'utilisateur est membre
       ->whereHas('structure', function ($query) use ($request) {
         $query->where('user_id', $request->user()->id);
@@ -98,7 +96,7 @@ class EventController extends Controller
         'eventSubscriptions' => function ($query) {
           $query
             ->select('items.id', 'items.name', 'items.category_id', 'quantity')
-            ->with(['options', 'category'])
+            ->with(['category'])
             ->orderBy('name')
             ->orderBy('category_id');
         },
