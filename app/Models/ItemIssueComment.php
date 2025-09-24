@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ItemOptionIssueComment extends Model
+class ItemIssueComment extends Model
 {
   protected $fillable = [
-    'item_option_issue_id',
+    'item_issue_id',
     'comment',
     'user_id',
   ];

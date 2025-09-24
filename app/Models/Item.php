@@ -35,14 +35,9 @@ class Item extends Model
     'updated_at',
   ];
 
-  public function options()
+  public function issues()
   {
-    return $this->hasMany(ItemOption::class, 'item_id');
-  }
-
-  public function optionIssues()
-  {
-    return $this->hasManyThrough(ItemOptionIssue::class, ItemOption::class);
+    return $this->hasMany(ItemIssue::class, );
   }
 
   public function events()

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\ItemIssue;
 use App\Models\ItemOption;
 use App\Models\ItemOptionIssue;
 use Illuminate\Http\Request;
@@ -11,9 +12,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-class ItemOptionIssueController extends Controller
+class ItemIssueController extends Controller
 {
-  public function createIssue(Request $request, Item $item, ItemOption $option)
+  public function createIssue(Request $request, Item $item)
   {
     $validator = Validator::make($request->all(), [
       'value' => 'required',
@@ -24,26 +25,20 @@ class ItemOptionIssueController extends Controller
       return response()->json($validator->errors(), 400);
     }
 
-    $issue = $option->optionIssues()->create([
+    $issue = $item->issues()->create([
       'status' => 'open',
       'value' => trim($request->value),
-      'item_option_id' => $option->id,
     ]);
-
-    if ($option->usable) {
-      $option->usable = $request->usable;
-      $option->save();
-    }
 
     return response()->json($issue, 201);
   }
 
-  public function getComments(Item $item, ItemOption $option, ItemOptionIssue $optionIssue)
+  public function getComments(Item $item, ItemIssue $issue)
   {
-    return response()->json($optionIssue->comments()->with('author:id,name')->get());
+    return response()->json($issue->comments()->with('author:id,name')->get());
   }
 
-  public function createComment(Request $request, Item $item, ItemOption $option, ItemOptionIssue $optionIssue)
+  public function createComment(Request $request, Item $item, ItemIssue $issue)
   {
     $validator = Validator::make($request->all(), [
       'comment' => 'required',
@@ -54,12 +49,11 @@ class ItemOptionIssueController extends Controller
     }
     Log::info('Creating comment', [
       'item_id' => $item->id,
-      'option_id' => $option->id,
-      'issue_id' => $optionIssue->id,
+      'issue_id' => $issue->id,
       'user_id' => Auth::user()->id,
     ]);
 
-    $comment = $optionIssue->comments()->create([
+    $comment = $issue->comments()->create([
       'comment' => $request->comment,
       'user_id' => Auth::user()->id,
     ]);
@@ -69,27 +63,22 @@ class ItemOptionIssueController extends Controller
 
   public function getIssues(Item $item)
   {
-    return response()->json($item->options()->with([
-      'optionIssues' => function ($q) {
-        $q->where('status', 'open');
-      },
-    ])->get());
+    return response()->json($item->issues()->get());
   }
 
-  public function resolveIssue(Request $request, Item $item, ItemOption $option, ItemOptionIssue $optionIssue)
+  public function resolveIssue(Request $request, Item $item, ItemIssue $issue)
   {
     if (
-      $item->id !== $option->item_id ||
-      $option->id !== $optionIssue->item_option_id ||
+      $item->id !== $issue->item_id ||
       $item->structure_id !== (int) $request->input('structure_id')
     ) {
       return response()->json(['error' => 'Forbidden'], status: 403);
     }
-    $optionIssue->status = 'resolved';
-    $optionIssue->date_resolution = Carbon::now();
-    $optionIssue->save();
+    $issue->status = 'resolved';
+    $issue->date_resolution = Carbon::now();
+    $issue->save();
 
-    return response()->json($optionIssue);
+    return response()->json($issue);
   }
 
   public function getOptionsWithIssues(Request $request, Item $item)
@@ -113,22 +102,21 @@ class ItemOptionIssueController extends Controller
     $page = $request->input('page', 1);
     $structure_id = $request->input('structure_id');
 
-    $issues = ItemOptionIssue::where('status', 'open')
+    $issues = ItemIssue::where('status', 'open')
       ->with([
-        'itemOption:id,name,usable,item_id',
-        'itemOption.item:id,name',
+        'item:id,name',
         'comments.author:id,name',
       ])
-      ->whereHas('itemOption', function ($query) use ($structure_id) {
-        $query->whereHas('item', function ($q) use ($structure_id) {
-          $q->where('structure_id', $structure_id);
-        });
+
+      ->whereHas('item', function ($q) use ($structure_id) {
+        $q->where('structure_id', $structure_id);
       })
+
       ->select([
         'id',
         'status',
         'value',
-        'item_option_id',
+        'item_id',
         'created_at',
       ])
       ->orderBy('created_at', 'desc')
