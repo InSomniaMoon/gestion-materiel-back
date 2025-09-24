@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ItemIssueController extends Controller
 {
@@ -26,6 +27,7 @@ class ItemIssueController extends Controller
     $issue = $item->issues()->create([
       'status' => 'open',
       'value' => trim($request->value),
+      'reported_by' => Auth::user()->id,
     ]);
 
     return response()->json($issue, 201);
@@ -61,19 +63,30 @@ class ItemIssueController extends Controller
 
   public function getIssues(Item $item)
   {
-    return response()->json($item->issues()->get());
+    return response()->json($item->issues()->where('status', 'open')->get());
   }
 
   public function resolveIssue(Request $request, Item $item, ItemIssue $issue)
   {
+    // structure mask from jwt
+    $payload = JWTAuth::parseToken()->getPayload();
+    $code_structure_mask = $payload->get('selected_structure.mask');
+
     if (
       $item->id !== $issue->item_id ||
-      $item->structure_id !== (int) $request->input('structure_id')
+      strncmp($item->structure()->get()[0]->code_structure, $code_structure_mask, strlen($code_structure_mask)) !== 0
     ) {
-      return response()->json(['error' => 'Forbidden'], status: 403);
+      Log::warning('Unauthorized attempt to resolve issue', [
+        'item_id' => $item->id,
+        'issue_id' => $issue->id,
+        'issue.item_id' => $issue->item_id,
+        'structure_id' => $request->input('structure_id'),
+      ]);
+
+      return response()->json(['error' => 'L\'item ne correspond pas à la structure spécifiée ou au problème spécifié.'], status: 403);
     }
     $issue->status = 'resolved';
-    $issue->date_resolution = Carbon::now();
+    $issue->resolution_date = Carbon::now();
     $issue->save();
 
     return response()->json($issue);

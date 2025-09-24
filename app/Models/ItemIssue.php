@@ -11,6 +11,7 @@ class ItemIssue extends Model
     'resolution_date',
     'status',
     'value',
+    'reported_by',
   ];
 
   protected $hidden = [
@@ -36,5 +37,10 @@ class ItemIssue extends Model
   public function item()
   {
     return $this->belongsTo(Item::class);
+  }
+
+  public function reporter()
+  {
+    return $this->belongsTo(User::class, 'reported_by');
   }
 }

@@ -18,6 +18,7 @@ return new class extends Migration {
       $table->foreignId('item_id')->constrained()->onDelete('cascade');
       $table->text('value')->nullable();
       $table->enum('status', ['open', 'in_progress', 'resolved', 'closed'])->default('open');
+      $table->foreignId('reported_by')->constrained('users')->onDelete('set null');
       $table->date('resolution_date')->nullable();
       $table->timestamps();
     });
