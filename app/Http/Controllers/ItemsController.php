@@ -63,7 +63,7 @@ class ItemsController extends Controller
       'code_structure' => 'required|exists:structures,code_structure',
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:1',
-      'order_by' => 'in:name,created_at,updated_at,category_id,open_option_issues_count,state',
+      'order_by' => 'in:name,created_at,updated_at,category_id,open_issues_count,state',
       'sort_by' => 'in:asc,desc',
       'category_id' => 'nullable|exists:item_categories,id',
     ]);
