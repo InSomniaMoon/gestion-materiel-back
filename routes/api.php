@@ -4,8 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeatureClickController;
 use App\Http\Controllers\ItemCategoryController;
-use App\Http\Controllers\ItemOptionController;
-use App\Http\Controllers\ItemOptionIssueController;
+use App\Http\Controllers\ItemIssueController;
 use App\Http\Controllers\ItemsController;
 use App\Http\Controllers\StructureController;
 use App\Http\Controllers\SubscriptionController;
@@ -48,16 +47,12 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::delete('items/{item:id}', [ItemsController::class, 'destroy']);
   Route::put('items/{item:id}', [ItemsController::class, 'update']);
 
-  Route::post('items/{item:id}/options', [ItemOptionController::class, 'createOption']);
-  Route::get('items/{item:id}/options', [ItemOptionIssueController::class, 'getOptionsWithIssues']);
-  Route::put('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'updateOption']);
-  Route::delete('items/{item:id}/options/{option:id}', [ItemOptionController::class, 'deleteOption']);
-  Route::get('items/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'getIssues']);
-  Route::get('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'getComments']);
-  Route::post('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'createComment']);
-  Route::patch('items/{item:id}/options/{option:id}/issues/{optionIssue:id}/resolve', [ItemOptionIssueController::class, 'resolveIssue']);
+  Route::get('items/{item:id}/issues', [ItemIssueController::class, 'getIssues']);
+  Route::get('items/{item:id}/issues/{issue:id}/comments', [ItemIssueController::class, 'getComments']);
+  Route::post('items/{item:id}/issues/{issue:id}/comments', [ItemIssueController::class, 'createComment']);
+  Route::patch('items/{item:id}/issues/{issue:id}/resolve', [ItemIssueController::class, 'resolveIssue']);
 
-  Route::get('issues/open', action: [ItemOptionIssueController::class, 'getPaginatedOpenedIssues']);
+  Route::get('issues/open', action: [ItemIssueController::class, 'getPaginatedOpenedIssues']);
 
   Route::get('structures', [StructureController::class, 'getStructuresWithMembers']);
   Route::post('structures', [StructureController::class, 'store']);
@@ -73,21 +68,13 @@ Route::prefix('/items')->middleware('jwt')->group(function () {
   Route::get('/categories', [ItemsController::class, 'getCategories']);
 
   Route::get('/{item:id}', [ItemsController::class, 'show']);
-  Route::get('/{item:id}/options', [ItemOptionController::class, 'getOptions']);
-  Route::post('/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'createIssue']);
-  Route::get('/{item:id}/options/{option:id}/issues', [ItemOptionIssueController::class, 'getIssues']);
+  Route::post('/{item:id}/issues', [ItemIssueController::class, 'createIssue']);
+  Route::get('/{item:id}/issues', [ItemIssueController::class, 'getIssues']);
 
   Route::prefix('uses')->group(function () {
     Route::get('/', [SubscriptionController::class, 'getSubscriptions']);
     Route::post('/', [SubscriptionController::class, 'createSubscription']);
     Route::get('{subscription:id}', [SubscriptionController::class, 'getSubscription']);
-  });
-});
-
-Route::prefix('/options')->middleware('jwt')->group(function () {
-  Route::prefix('/{option:id}')->group(function () {
-    Route::get('/', [ItemOptionController::class, 'getOption']);
-    Route::get('/issues/{optionIssue:id}/comments', [ItemOptionIssueController::class, 'getComments']);
   });
 });
 

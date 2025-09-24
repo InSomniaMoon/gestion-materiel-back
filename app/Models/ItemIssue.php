@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ItemOptionIssue extends Model
+class ItemIssue extends Model
 {
   protected $fillable = [
-    'item_option_id',
-    'date_resolution',
+    'item_id',
+    'resolution_date',
     'status',
     'value',
+    'reported_by',
   ];
 
   protected $hidden = [
@@ -18,7 +19,7 @@ class ItemOptionIssue extends Model
   ];
 
   protected $casts = [
-    'date_resolution' => 'date',
+    'resolution_date' => 'date',
     'created_at' => 'datetime',
   ];
 
@@ -30,11 +31,16 @@ class ItemOptionIssue extends Model
 
   public function comments()
   {
-    return $this->hasMany(ItemOptionIssueComment::class);
+    return $this->hasMany(ItemIssueComment::class);
   }
 
-  public function itemOption()
+  public function item()
   {
-    return $this->belongsTo(ItemOption::class);
+    return $this->belongsTo(Item::class);
+  }
+
+  public function reporter()
+  {
+    return $this->belongsTo(User::class, 'reported_by');
   }
 }

@@ -42,23 +42,6 @@ class ItemsController extends Controller
       'image' => $request->image,
     ]);
 
-    Log::info($item);
-
-    if ($request->has('options')) {
-      // validation for options
-      $validator = Validator::make($request->options, [
-        '*.name' => 'required|max:255',
-        '*.description' => 'max:255',
-      ]);
-
-      if ($validator->fails()) {
-        return response()->json($validator->errors(), 400);
-      }
-
-      // Synchroniser les options (pour la création, toutes les options sont nouvelles)
-      $this->syncOptions($item, $request->options);
-    }
-
     return response()->json($item, 201);
   }
 
@@ -80,7 +63,7 @@ class ItemsController extends Controller
       'code_structure' => 'required|exists:structures,code_structure',
       'size' => 'integer|min:1|max:100',
       'page' => 'integer|min:1',
-      'order_by' => 'in:name,created_at,updated_at,category_id,open_option_issues_count,state',
+      'order_by' => 'in:name,created_at,updated_at,category_id,open_issues_count,state',
       'sort_by' => 'in:asc,desc',
       'category_id' => 'nullable|exists:item_categories,id',
     ]);
@@ -89,31 +72,28 @@ class ItemsController extends Controller
       return response()->json($validator->errors(), 400);
     }
 
-    // Get all items paginated with their itemOptions
+    // Get all items paginated
 
     $items = Item::whereHas('structure', function ($query) use ($code_structure) {
       $query->where('code_structure', $code_structure);
     })
-      ->with(['category', 'options']);
+      ->with(['category']);
 
     if ($isAdmin) {
       $items = $items->withCount([
-        'options as open_option_issues_count' => function ($query) {
-          $query->join('item_option_issues', 'item_options.id', '=', 'item_option_issues.item_option_id')
-            ->where('item_option_issues.status', 'open');
+        'issues as open_issues_count' => function ($query) {
+          $query->where('item_issues.status', 'open');
         },
       ])
         ->addSelect([
           DB::raw('(CASE
             WHEN items.usable = true
-              AND (SELECT COUNT(*) FROM item_options
-                   INNER JOIN item_option_issues ON item_options.id = item_option_issues.item_option_id
-                   WHERE item_options.item_id = items.id AND item_option_issues.status = \'open\') = 0
+              AND (SELECT COUNT(*) FROM item_issues
+                   WHERE item_issues.item_id = items.id AND item_issues.status = \'open\') = 0
             THEN \'OK\'
             WHEN items.usable = true
-              AND (SELECT COUNT(*) FROM item_options
-                   INNER JOIN item_option_issues ON item_options.id = item_option_issues.item_option_id
-                   WHERE item_options.item_id = items.id AND item_option_issues.status = \'open\') > 0
+              AND (SELECT COUNT(*) FROM item_issues
+                   WHERE item_issues.item_id = items.id AND item_issues.status = \'open\') > 0
             THEN \'NOK\'
             ELSE \'KO\'
           END) as state'),
@@ -136,7 +116,8 @@ class ItemsController extends Controller
         });
     }
 
-    $items = $items->orderBy($orderBy, $orderDir)->paginate($size, ['*'], 'page', $page)
+    $items = $items->orderBy($orderBy, $orderDir)
+      ->simplePaginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       // set the query string for the next page
       ->withQueryString();
@@ -153,8 +134,6 @@ class ItemsController extends Controller
     ) {
       return response()->json(['message' => 'Unauthorized'], 401);
     }
-
-    $item->load('options');
 
     return response()->json($item, 200);
   }
@@ -175,62 +154,10 @@ class ItemsController extends Controller
       ? date('Y-m-d', strtotime($request->date_of_buy))
       : null;
     $item->image = $request->image;
-    $options = $request->options ?? [];
-
-    // Synchroniser les options
-    $this->syncOptions($item, $options);
 
     $item->save();
 
     return response()->json($item);
-  }
-
-  /**
-   * Synchronise les options d'un item
-   * - Supprime les options qui ne sont plus dans la liste
-   * - Crée ou met à jour les options existantes
-   */
-  private function syncOptions(Item $item, array $options)
-  {
-    // Récupérer les IDs des options existantes
-    $existingOptionIds = $item->options()->pluck('id')->toArray();
-
-    // Récupérer les IDs des options envoyées (filtrer les null/0)
-    $submittedOptionIds = collect($options)
-      ->pluck('id')
-      ->filter(function ($id) {
-        return $id !== null && $id !== 0;
-      })
-      ->toArray();
-
-    // Supprimer les options qui ne sont plus dans la liste
-    $optionsToDelete = array_diff($existingOptionIds, $submittedOptionIds);
-    if (! empty($optionsToDelete)) {
-      $item->options()->whereIn('id', $optionsToDelete)->delete();
-    }
-
-    // Créer ou mettre à jour les options
-    foreach ($options as $optionData) {
-      // Préparer les données de l'option
-      $optionData['usable'] ??= true;
-      $optionData['item_id'] = $item->id;
-
-      if (isset($optionData['id']) && $optionData['id'] > 0) {
-        // Mettre à jour l'option existante
-        $item->options()->where('id', $optionData['id'])->update([
-          'name' => $optionData['name'],
-          'description' => $optionData['description'] ?? '',
-          'usable' => $optionData['usable'],
-        ]);
-      } else {
-        // Créer une nouvelle option
-        $item->options()->create([
-          'name' => $optionData['name'],
-          'description' => $optionData['description'] ?? '',
-          'usable' => $optionData['usable'],
-        ]);
-      }
-    }
   }
 
   public function destroy(Item $item)
