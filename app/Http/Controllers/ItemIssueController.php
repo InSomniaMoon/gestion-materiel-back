@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\ItemIssue;
-use App\Models\ItemOption;
-use App\Models\ItemOptionIssue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -79,21 +77,6 @@ class ItemIssueController extends Controller
     $issue->save();
 
     return response()->json($issue);
-  }
-
-  public function getOptionsWithIssues(Request $request, Item $item)
-  {
-    $item->load([
-      'options.optionIssues' => function ($q) {
-        $q->where('status', 'open');
-      },
-    ]);
-
-    Log::info("Item Option Issues for Item: $item->id", [
-      'issues' => $item->options,
-    ]);
-
-    return response()->json($item->options);
   }
 
   public function getPaginatedOpenedIssues(Request $request)

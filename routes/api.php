@@ -5,8 +5,6 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeatureClickController;
 use App\Http\Controllers\ItemCategoryController;
 use App\Http\Controllers\ItemIssueController;
-use App\Http\Controllers\ItemOptionController;
-use App\Http\Controllers\ItemOptionIssueController;
 use App\Http\Controllers\ItemsController;
 use App\Http\Controllers\StructureController;
 use App\Http\Controllers\SubscriptionController;
@@ -50,9 +48,9 @@ Route::prefix('/admin')->middleware('jwt:admin')->group(function () {
   Route::put('items/{item:id}', [ItemsController::class, 'update']);
 
   Route::get('items/{item:id}/issues', [ItemIssueController::class, 'getIssues']);
-  Route::get('items/{item:id}/issues/{optionIssue:id}/comments', [ItemIssueController::class, 'getComments']);
-  Route::post('items/{item:id}/issues/{optionIssue:id}/comments', [ItemIssueController::class, 'createComment']);
-  Route::patch('items/{item:id}/issues/{optionIssue:id}/resolve', [ItemIssueController::class, 'resolveIssue']);
+  Route::get('items/{item:id}/issues/{issue:id}/comments', [ItemIssueController::class, 'getComments']);
+  Route::post('items/{item:id}/issues/{issue:id}/comments', [ItemIssueController::class, 'createComment']);
+  Route::patch('items/{item:id}/issues/{issue:id}/resolve', [ItemIssueController::class, 'resolveIssue']);
 
   Route::get('issues/open', action: [ItemIssueController::class, 'getPaginatedOpenedIssues']);
 

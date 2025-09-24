@@ -72,7 +72,7 @@ class ItemsController extends Controller
       return response()->json($validator->errors(), 400);
     }
 
-    // Get all items paginated with their itemOptions
+    // Get all items paginated
 
     $items = Item::whereHas('structure', function ($query) use ($code_structure) {
       $query->where('code_structure', $code_structure);
