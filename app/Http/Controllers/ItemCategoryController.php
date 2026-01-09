@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ItemCategory;
+use App\Models\Structure;
 use Illuminate\Http\Request;
 use Log;
 use Validator;
@@ -62,7 +63,7 @@ class ItemCategoryController extends Controller
       return response()->json($validator->errors(), 400);
     }
     $code_structure = $request->input('code_structure');
-    $structure = StructureController::where('code_structure', $code_structure)->first();
+    $structure = Structure::where('code_structure', $code_structure)->first();
     $category = ItemCategory::create([
       'name' => $request->name,
       'structure_id' => $structure->id,
