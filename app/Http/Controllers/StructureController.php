@@ -44,6 +44,7 @@ class StructureController extends Controller
   {
     $request->validate([
       'name' => 'nullable|string',
+      'color' => 'nullable|string',
       'image' => 'nullable|string',
       'description' => 'nullable|string',
     ]);
@@ -53,6 +54,10 @@ class StructureController extends Controller
     if ($request->has('name')) {
       // update name in user_structures table
       $structure->name = $request->name;
+    }
+
+    if ($request->has('color')) {
+      $structure->color = $request->color;
     }
 
     if ($request->has('description')) {
@@ -71,7 +76,7 @@ class StructureController extends Controller
 
     return response()->json([
       'message' => 'Structure modifiée avec succès',
-      'structure' => $structure,
+      'structure' => $structure->with(('members:id,firstname,lastname'))->find($structure->id),
     ]);
   }
 
