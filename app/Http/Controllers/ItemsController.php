@@ -40,6 +40,7 @@ class ItemsController extends Controller
       'category_id' => $request->category_id,
       'structure_id' => $structure->id,
       'image' => $request->image,
+      'stock' => $request->stock ?? 1,
     ]);
 
     return response()->json($item, 201);
@@ -154,6 +155,7 @@ class ItemsController extends Controller
       ? date('Y-m-d', strtotime($request->date_of_buy))
       : null;
     $item->image = $request->image;
+    $item->stock = $request->stock ?? $item->stock;
 
     $item->save();
 
@@ -183,7 +185,7 @@ class ItemsController extends Controller
     }
     $item->delete();
 
-    return response()->json(null, 204);
+    return response()->json(null, status: 202);
   }
 
   public function getCategories()

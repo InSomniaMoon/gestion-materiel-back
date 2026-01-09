@@ -28,6 +28,7 @@ class Item extends Model
     'structure_id',
     'category_id',
     'image',
+    'stock',
   ];
 
   protected $hidden = [
