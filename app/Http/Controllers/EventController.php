@@ -13,16 +13,27 @@ class EventController extends Controller
   {
     $structure_id = $request->input('structure_id');
 
+    $validator = Validator::make($request->all(), [
+      'structure_id' => 'required|integer|exists:structures,id',
+      'start_date' => 'nullable|date_format:"Y-m-d\TH:i:s.000\Z"',
+      'end_date' => 'nullable|date_format:"Y-m-d\TH:i:s.000\Z"|after_or_equal:start_date',
+    ]);
+
+    if ($validator->fails()) {
+      return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    // Default values if not provided: start of the actual month to end of the actual month
+    // start date is request start_date or start of the actual month
+    $start_date = $request->input('start_date', now()->startOfMonth()->toIso8601String());
+    $end_date = $request->input('end_date', now()->endOfMonth()->toIso8601String());
+    // end date is request end_date or end of the actual month
+
     $events = Event::
       with(['structure:id,color'])
-      ->where(function ($query) use ($structure_id) {
-        $query
-          ->whereHas('structure', function ($q) use ($structure_id) {
-            $q->where('structure_id', $structure_id);
-          })
-          ->where('start_date', '>=', now())
-          ->orWhere('end_date', '>=', now());
-      })
+      ->where('structure_id', $structure_id)
+      ->orWhere('end_date', '>=', $start_date)
+      ->orWhere('start_date', '<=', $end_date)
       ->get();
 
     return response()->json($events);
