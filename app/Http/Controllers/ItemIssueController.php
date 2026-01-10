@@ -18,7 +18,7 @@ class ItemIssueController extends Controller
     $validator = Validator::make($request->all(), [
       'value' => 'required',
       'usable' => 'boolean',
-      'affected_quantity' => 'required|integer|min:1|max:'.$item->stock,
+      'affected_quantity' => "required|integer|min:1|max:$item->stock",
     ]);
 
     if ($validator->fails()) {
