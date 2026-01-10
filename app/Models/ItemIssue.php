@@ -12,6 +12,7 @@ class ItemIssue extends Model
     'status',
     'value',
     'reported_by',
+    'affected_quantity',
   ];
 
   protected $hidden = [

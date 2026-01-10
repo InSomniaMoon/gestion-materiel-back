@@ -48,7 +48,7 @@ class ItemsController extends Controller
 
   public function index(Request $request)
   {
-    $isAdmin = in_array('jwt:admin', $request->route()->middleware());
+    // $isAdmin = in_array('jwt:admin', $request->route()->middleware());
 
     // "current_page": 1,
     $size = $request->query('size', 25);
@@ -80,14 +80,13 @@ class ItemsController extends Controller
     })
       ->with(['category']);
 
-    if ($isAdmin) {
-      $items = $items->withCount([
-        'issues as open_issues_count' => function ($query) {
-          $query->where('item_issues.status', 'open');
-        },
-      ])
-        ->addSelect([
-          DB::raw('(CASE
+    $items = $items->withCount([
+      'issues as open_issues_count' => function ($query) {
+        $query->where('item_issues.status', 'open');
+      },
+    ])
+      ->addSelect([
+        DB::raw('(CASE
             WHEN items.usable = true
               AND (SELECT COUNT(*) FROM item_issues
                    WHERE item_issues.item_id = items.id AND item_issues.status = \'open\') = 0
@@ -98,8 +97,7 @@ class ItemsController extends Controller
             THEN \'NOK\'
             ELSE \'KO\'
           END) as state'),
-        ]);
-    }
+      ]);
 
     if ($category) {
       $items = $items->where('category_id', $category);

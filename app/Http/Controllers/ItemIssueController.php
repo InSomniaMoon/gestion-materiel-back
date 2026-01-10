@@ -18,6 +18,7 @@ class ItemIssueController extends Controller
     $validator = Validator::make($request->all(), [
       'value' => 'required',
       'usable' => 'boolean',
+      'affected_quantity' => 'required|integer|min:1|max:'.$item->stock,
     ]);
 
     if ($validator->fails()) {
@@ -29,6 +30,12 @@ class ItemIssueController extends Controller
       'value' => trim($request->value),
       'reported_by' => Auth::user()->id,
     ]);
+
+    if ($item->category->identified) {
+      $issue->update([
+        'affected_quantity' => $request->affected_quantity,
+      ]);
+    }
 
     return response()->json($issue, 201);
   }

@@ -36,6 +36,8 @@ class Item extends Model
     'updated_at',
   ];
 
+  protected $with = ['category:id,name,identified'];
+
   public function issues()
   {
     return $this->hasMany(ItemIssue::class, );
