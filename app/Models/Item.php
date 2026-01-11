@@ -36,9 +36,43 @@ class Item extends Model
     'updated_at',
   ];
 
+  protected $with = ['category:id,name,identified'];
+
+  protected $appends = ['usable_stock', 'state'];
+
+  public function getUsableStockAttribute()
+  {
+    if (! $this->category || ! $this->category->identified) {
+      $openIssuesQuantity = ItemIssue::where('item_id', $this->id)
+        ->where('status', 'open')
+        ->sum('affected_quantity');
+
+      return $this->stock - $openIssuesQuantity;
+    } else {
+      return $this->stock;
+    }
+  }
+
+  public function getStateAttribute()
+  {
+    if ($this->usable) {
+      $openIssuesCount = ItemIssue::where('item_id', $this->id)
+        ->where('status', 'open')
+        ->count();
+
+      if ($openIssuesCount > 0) {
+        return 'NOK';
+      } else {
+        return 'OK';
+      }
+    } else {
+      return 'KO';
+    }
+  }
+
   public function issues()
   {
-    return $this->hasMany(ItemIssue::class, );
+    return $this->hasMany(ItemIssue::class);
   }
 
   public function events()

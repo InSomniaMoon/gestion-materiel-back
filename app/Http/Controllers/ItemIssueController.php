@@ -18,6 +18,7 @@ class ItemIssueController extends Controller
     $validator = Validator::make($request->all(), [
       'value' => 'required',
       'usable' => 'boolean',
+      'affected_quantity' => "required|integer|min:1|max:$item->stock",
     ]);
 
     if ($validator->fails()) {
@@ -30,12 +31,18 @@ class ItemIssueController extends Controller
       'reported_by' => Auth::user()->id,
     ]);
 
+    if (! $item->category->identified) {
+      $issue->update([
+        'affected_quantity' => $request->affected_quantity,
+      ]);
+    }
+
     return response()->json($issue, 201);
   }
 
   public function getComments(Item $item, ItemIssue $issue)
   {
-    return response()->json($issue->comments()->with('author:id,name')->get());
+    return response()->json($issue->comments()->with('author:id,lastname,firstname')->get());
   }
 
   public function createComment(Request $request, Item $item, ItemIssue $issue)
@@ -101,7 +108,7 @@ class ItemIssueController extends Controller
     $issues = ItemIssue::where('status', 'open')
       ->with([
         'item:id,name',
-        'comments.author:id,name',
+        'comments.author:id,lastname,firstname',
       ])
 
       ->whereHas('item', function ($q) use ($structure_id) {

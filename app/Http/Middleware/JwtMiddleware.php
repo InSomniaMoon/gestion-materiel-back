@@ -23,26 +23,30 @@ class JwtMiddleware
     }
     try {
       JWTAuth::parseToken()->authenticate();
-      // get claim type
+      // get role claim from token
       $payload = JWTAuth::parseToken()->getPayload();
+      $structure = $payload->get('selected_structure');
+      $mask = $payload->get('selected_structure.mask');
+      $code_structure = $request->query('code_structure');
       $claims = $payload->get('type');
 
       if ($claims != TokenType::ACCESS->value) {
         throw new JWTException('token not access');
       }
+
+      // Vérifie si le code_structure commence par le mask
+      if (! \is_string($mask) || ! \is_string($code_structure) || \strncmp($code_structure, $mask, \strlen($mask)) !== 0) {
+        throw new JWTException("Le code_structure $code_structure ne correspond pas au mask $mask");
+      }
       // token
     } catch (JWTException $e) {
       Log::error('Token non valide', ['error' => $e->getMessage()]);
 
-      return response()->json(['error' => 'Token non valide'], 401);
-    }
+      return response()->json(['error' => 'Token non valide'], 403);
+    } catch (\Exception $e) {
+      Log::error('Erreur serveur', ['error' => $e->getMessage()]);
 
-    $loaded_structure_code = $payload->get('selected_structure.code');
-    $structure_code = $request->query('code_structure');
-
-    Log::info("loaded_structure_code: $loaded_structure_code, structure_code: $structure_code");
-    if ($loaded_structure_code !== $structure_code) {
-      return response()->json(['error' => 'Non autorisé'], 403);
+      return response()->json(['error' => 'Erreur serveur'], 500);
     }
 
     return $next($request);

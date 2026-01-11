@@ -48,7 +48,7 @@ class ItemsController extends Controller
 
   public function index(Request $request)
   {
-    $isAdmin = in_array('jwt:admin', $request->route()->middleware());
+    // $isAdmin = in_array('jwt:admin', $request->route()->middleware());
 
     // "current_page": 1,
     $size = $request->query('size', 25);
@@ -62,7 +62,7 @@ class ItemsController extends Controller
 
     $validator = Validator::make($request->all(), [
       'code_structure' => 'required|exists:structures,code_structure',
-      'size' => 'integer|min:1|max:100',
+      'size' => 'integer|min:1',
       'page' => 'integer|min:1',
       'order_by' => 'in:name,created_at,updated_at,category_id,open_issues_count,state',
       'sort_by' => 'in:asc,desc',
@@ -80,26 +80,11 @@ class ItemsController extends Controller
     })
       ->with(['category']);
 
-    if ($isAdmin) {
-      $items = $items->withCount([
-        'issues as open_issues_count' => function ($query) {
-          $query->where('item_issues.status', 'open');
-        },
-      ])
-        ->addSelect([
-          DB::raw('(CASE
-            WHEN items.usable = true
-              AND (SELECT COUNT(*) FROM item_issues
-                   WHERE item_issues.item_id = items.id AND item_issues.status = \'open\') = 0
-            THEN \'OK\'
-            WHEN items.usable = true
-              AND (SELECT COUNT(*) FROM item_issues
-                   WHERE item_issues.item_id = items.id AND item_issues.status = \'open\') > 0
-            THEN \'NOK\'
-            ELSE \'KO\'
-          END) as state'),
-        ]);
-    }
+    $items = $items->withCount([
+      'issues as open_issues_count' => function ($query) {
+        $query->where('item_issues.status', 'open');
+      },
+    ]);
 
     if ($category) {
       $items = $items->where('category_id', $category);
@@ -118,7 +103,7 @@ class ItemsController extends Controller
     }
 
     $items = $items->orderBy($orderBy, $orderDir)
-      ->simplePaginate($size, ['*'], 'page', $page)
+      ->paginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       // set the query string for the next page
       ->withQueryString();
@@ -239,7 +224,7 @@ class ItemsController extends Controller
       'start_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"',
       'end_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"|after_or_equal:start_date',
       'page' => 'integer|min:1',
-      'size' => 'integer|min:1|max:100',
+      'size' => 'integer|min:1',
       'q' => 'nullable|string|max:255',
       'order_by' => 'in:items.name,category_id',
       'sort_by' => 'in:asc,desc',

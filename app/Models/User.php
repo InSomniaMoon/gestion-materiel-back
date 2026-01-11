@@ -45,6 +45,8 @@ class User extends Authenticatable implements JWTSubject
     'updated_at',
   ];
 
+  protected $appends = ['full_name'];
+
   /**
    * Get the attributes that should be cast.
    *
@@ -54,7 +56,18 @@ class User extends Authenticatable implements JWTSubject
   {
     return [
       'password' => 'hashed',
+      'email_verified_at' => 'datetime',
+      'created_at' => 'datetime',
+      'updated_at' => 'datetime',
     ];
+  }
+
+  /**
+   * Get the user's full name.
+   */
+  public function getFullNameAttribute(): string
+  {
+    return "{$this->firstname} {$this->lastname}";
   }
 
   public function userStructures()

@@ -26,7 +26,7 @@ class JwtAdminMiddleware
       $code_structure = $request->query('code_structure');
 
       // Vérifie si le code_structure commence par le mask
-      if (! is_string($mask) || ! is_string($code_structure) || strncmp($code_structure, $mask, strlen($mask)) !== 0) {
+      if (! \is_string($mask) || ! \is_string($code_structure) || \strncmp($code_structure, $mask, \strlen($mask)) !== 0) {
         throw new JWTException("Le code_structure $code_structure ne correspond pas au mask $mask");
       }
       if ($structure['code'] !== $code_structure || $structure['role'] !== 'admin') {
@@ -35,7 +35,7 @@ class JwtAdminMiddleware
     } catch (JWTException $e) {
       Log::warning('Token non valide', ['error' => $e->getMessage()]);
 
-      return response()->json(['error' => 'Token non valide'], 401);
+      return response()->json(['error' => 'Token non valide'], 403);
     } catch (\Exception $e) {
       Log::error('Erreur serveur', ['error' => $e->getMessage()]);
 
