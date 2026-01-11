@@ -31,7 +31,7 @@ class ItemIssueController extends Controller
       'reported_by' => Auth::user()->id,
     ]);
 
-    if ($item->category->identified) {
+    if (! $item->category->identified) {
       $issue->update([
         'affected_quantity' => $request->affected_quantity,
       ]);
@@ -42,7 +42,7 @@ class ItemIssueController extends Controller
 
   public function getComments(Item $item, ItemIssue $issue)
   {
-    return response()->json($issue->comments()->with('author:id,name')->get());
+    return response()->json($issue->comments()->with('author:id,lastname,firstname')->get());
   }
 
   public function createComment(Request $request, Item $item, ItemIssue $issue)
@@ -108,7 +108,7 @@ class ItemIssueController extends Controller
     $issues = ItemIssue::where('status', 'open')
       ->with([
         'item:id,name',
-        'comments.author:id,name',
+        'comments.author:id,lastname,firstname',
       ])
 
       ->whereHas('item', function ($q) use ($structure_id) {

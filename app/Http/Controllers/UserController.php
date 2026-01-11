@@ -60,7 +60,7 @@ class UserController extends Controller
         }
       })
       ->orderBy($sortBy, $orderBy)
-      ->simplePaginate($size, ['*'], 'page', $page)
+      ->paginate($size, ['*'], 'page', $page)
       ->withPath('/users')
       ->withQueryString();
 

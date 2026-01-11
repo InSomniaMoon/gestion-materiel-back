@@ -84,20 +84,7 @@ class ItemsController extends Controller
       'issues as open_issues_count' => function ($query) {
         $query->where('item_issues.status', 'open');
       },
-    ])
-      ->addSelect([
-        DB::raw('(CASE
-            WHEN items.usable = true
-              AND (SELECT COUNT(*) FROM item_issues
-                   WHERE item_issues.item_id = items.id AND item_issues.status = \'open\') = 0
-            THEN \'OK\'
-            WHEN items.usable = true
-              AND (SELECT COUNT(*) FROM item_issues
-                   WHERE item_issues.item_id = items.id AND item_issues.status = \'open\') > 0
-            THEN \'NOK\'
-            ELSE \'KO\'
-          END) as state'),
-      ]);
+    ]);
 
     if ($category) {
       $items = $items->where('category_id', $category);
@@ -116,7 +103,7 @@ class ItemsController extends Controller
     }
 
     $items = $items->orderBy($orderBy, $orderDir)
-      ->simplePaginate($size, ['*'], 'page', $page)
+      ->paginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       // set the query string for the next page
       ->withQueryString();
