@@ -62,7 +62,7 @@ class ItemsController extends Controller
 
     $validator = Validator::make($request->all(), [
       'code_structure' => 'required|exists:structures,code_structure',
-      'size' => 'integer|min:1|max:100',
+      'size' => 'integer|min:1',
       'page' => 'integer|min:1',
       'order_by' => 'in:name,created_at,updated_at,category_id,open_issues_count,state',
       'sort_by' => 'in:asc,desc',
@@ -224,7 +224,7 @@ class ItemsController extends Controller
       'start_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"',
       'end_date' => 'required|date_format:"Y-m-d\TH:i:s.000\Z"|after_or_equal:start_date',
       'page' => 'integer|min:1',
-      'size' => 'integer|min:1|max:100',
+      'size' => 'integer|min:1',
       'q' => 'nullable|string|max:255',
       'order_by' => 'in:items.name,category_id',
       'sort_by' => 'in:asc,desc',

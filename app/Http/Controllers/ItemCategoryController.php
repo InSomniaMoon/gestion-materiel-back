@@ -20,7 +20,7 @@ class ItemCategoryController extends Controller
 
     $validator = Validator::make($request->all(), [
       'code_structure' => 'required',
-      'size' => 'integer|min:1|max:100',
+      'size' => 'integer|min:1',
       'page' => 'integer|min:0',
       'order_by' => 'in:name,created_at,updated_at',
     ]);
