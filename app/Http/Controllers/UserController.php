@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Structure;
 use App\Models\User;
 use App\Models\UserStructure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Log;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
@@ -35,29 +35,20 @@ class UserController extends Controller
     $sortBy = $request->input('order_by', 'lastname');
     $orderBy = $request->input('sort_by', 'asc');
 
-    $structure = Structure::where('code_structure', $request->input('code_structure'))->first();
+    // structure mask from jwt
+    $code_structure_mask = JWTAuth::parseToken()->getPayload()->get('selected_structure.mask');
 
-    $users = User::
-      with([
-        'userStructures:id,name,color,code_structure',
-      ])
+    $users = User::with([
+      'userStructures:id,name,color,code_structure',
+    ])
       ->whereAny([
         DB::raw('lower(firstname)'),
         DB::raw('lower(lastname)'),
         DB::raw('lower(email)'),
       ], 'like', '%'.strtolower($filter).'%')
 
-      ->whereHas('userStructures', function ($query) use ($request, $structure) {
-        switch ($structure->type) {
-          case Structure::GROUPE:
-            $code_base = substr($structure->code, 0, 2);
-            $query->where('code_structure', 'like', "$code_base%");
-
-            break;
-          default:
-            $query->where('id', $request->input('structure_id'));
-            break;
-        }
+      ->whereHas('userStructures', function ($query) use (&$code_structure_mask) {
+        $query->where('code_structure', 'like', "$code_structure_mask%");
       })
       ->orderBy($sortBy, $orderBy)
       ->paginate($size, ['*'], 'page', $page)
@@ -83,12 +74,11 @@ class UserController extends Controller
     $size = $request->input('size', 25);
     $filter = $request->input('q', '');
 
-    $users = User::
-      whereAny([
-        DB::raw('lower(firstname)'),
-        DB::raw('lower(lastname)'),
-        DB::raw('lower(email)'),
-      ], 'like', '%'.strtolower($filter).'%')
+    $users = User::whereAny([
+      DB::raw('lower(firstname)'),
+      DB::raw('lower(lastname)'),
+      DB::raw('lower(email)'),
+    ], 'like', '%'.strtolower($filter).'%')
       ->paginate($size, ['*'], 'page', $page)
       ->withPath('/items')
       ->withQueryString();
