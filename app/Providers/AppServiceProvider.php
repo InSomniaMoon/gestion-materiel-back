@@ -25,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
     config(['app.debug.sql' => env('APP_DEBUG_SQL', true)]);
 
     ResetPassword::createUrlUsing(function (User $user, string $token) {
-      return env('FRONT_URL').'/auth/reset-password?token='.$token;
+      return env('APP_URL').'/auth/reset-password?token='.$token;
     });
 
     if (config('app.debug.sql')) {

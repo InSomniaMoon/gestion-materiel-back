@@ -10,6 +10,7 @@ use App\Http\Controllers\StructureController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::get(
   '/storage/{path}',
