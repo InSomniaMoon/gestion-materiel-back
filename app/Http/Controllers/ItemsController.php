@@ -9,10 +9,10 @@ use App\Models\UserStructure;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
-use Log;
-use Storage;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ItemsController extends Controller
@@ -48,8 +48,6 @@ class ItemsController extends Controller
 
   public function index(Request $request)
   {
-    // $isAdmin = in_array('jwt:admin', $request->route()->middleware());
-
     // "current_page": 1,
     $size = $request->query('size', 25);
     $page = $request->query('page', 1);
@@ -183,7 +181,10 @@ class ItemsController extends Controller
     })
       ->distinct('name')
       ->orderBy('name')
-      ->select(['id', 'name', 'identified'])->get();
+      ->paginate(100, ['id', 'name', 'identified'], 'page', 1)
+      ->withPath('/categories')
+      // set the query string for the next page
+      ->withQueryString();
   }
 
   public function uploadFile(Request $request)

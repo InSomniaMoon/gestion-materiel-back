@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ItemCategory;
 use App\Models\Structure;
 use Illuminate\Http\Request;
-use Log;
-use Validator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class ItemCategoryController extends Controller
 {
@@ -28,8 +28,6 @@ class ItemCategoryController extends Controller
     if ($validator->fails()) {
       return response()->json($validator->errors(), 400);
     }
-
-    Log::info('request for getPaginatedCategories', $request->all());
 
     $items = ItemCategory::whereHas('structure', function ($query) use ($code_structure) {
       $query->where('code_structure', $code_structure);
