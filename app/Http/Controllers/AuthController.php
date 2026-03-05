@@ -35,7 +35,7 @@ class AuthController extends Controller
     $user = Auth::user();
 
     $structures = $user->userStructures()->orderBy('code_structure')->get();
-    $tokens = $this->generate_tokens($user, $structures->first(), null);
+    $tokens = $this->generateTokens($user, $structures->first(), null);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
@@ -123,7 +123,7 @@ class AuthController extends Controller
     $user = $refresh_token->user()->first();
     $structures = $user->userStructures()->orderBy('code_structure')->get();
 
-    $tokens = $this->generate_tokens($user, $structures->first(), $refresh_token);
+    $tokens = $this->generateTokens($user, $structures->first(), $refresh_token);
     $token = $tokens['token'];
     $refresh_token = $tokens['refresh_token'];
 
@@ -132,12 +132,13 @@ class AuthController extends Controller
     );
   }
 
-  private function generate_tokens(User $user, Structure $structure, $existing_refresh_token)
+  private function generateTokens(User $user, Structure $structure, $existing_refresh_token)
   {
     $refresh_token = $existing_refresh_token->token ?? uuid7();
     $code_mask = match ($structure?->type) {
-      Structure::NATIONAL, Structure::UNITE => substr($structure?->code_structure, 0, -2),
-      Structure::GROUPE, Structure::TERRITOIRE => $structure?->code_structure,
+      Structure::GROUPE, Structure::UNITE => substr($structure?->code_structure, 0, -2),
+
+      Structure::TERRITOIRE => substr($structure?->code_structure, 0, -4),
       default => $structure?->code_structure,
     };
     $token = JWTAuth::claims([
@@ -189,7 +190,7 @@ class AuthController extends Controller
       return response()->json(['error' => 'Unauthorized'], 403);
     }
 
-    return $this->generate_tokens($user, $structure, $refresh_token);
+    return $this->generateTokens($user, $structure, $refresh_token);
   }
 }
 
@@ -209,7 +210,7 @@ function uuid7()
     '%s%s-%s-%s-%s-%s%s%s',
     str_split(
       str_pad(dechex($unixts_ms), 12, '0', \STR_PAD_LEFT).
-      bin2hex($data),
+        bin2hex($data),
       4
     )
   );
