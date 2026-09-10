@@ -18,6 +18,5 @@ jobs:
           ssh-keyscan -p 2222 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
       - name: sync code to server
         run:
-          ssh -o StrictHostKeyChecking=no -p 2222 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd /mnt/HDD_Pedro/docker_folders/backend_dotnet
-          && git pull && docker-compose up -d --build --remove-orphans
-          "
+          ssh -o StrictHostKeyChecking=no -p 2222 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ~/gestion_materiel/back
+          && git pull && docker-compose up -d --build --remove-orphans"
